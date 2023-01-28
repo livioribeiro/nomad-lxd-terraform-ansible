@@ -1,3 +1,13 @@
+resource "local_file" "extra_variables" {
+  filename = "${path.module}/inventory/extra_variables"
+  content = <<EOT
+[all:vars]
+ubuntu_version=${var.ubuntu_version}
+apps_domain=${var.apps_domain}
+local_cluster_domain=${var.local_cluster_domain}
+  EOT
+}
+
 resource "local_file" "inventory" {
   filename = "${path.module}/inventory/hosts"
   content = <<-EOT

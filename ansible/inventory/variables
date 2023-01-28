@@ -1,8 +1,4 @@
 [all:vars]
-ubuntu_version=jammy
-apps_domain=apps.localhost
-local_cluster_domain=cluster.local
-
 hashicorp_gpg_url=https://apt.releases.hashicorp.com/gpg
 hashicorp_repo=deb [arch=amd64] https://apt.releases.hashicorp.com {{ ubuntu_version }} main
 

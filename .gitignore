@@ -1,5 +1,6 @@
 *.retry
 ssh/
+certs/
 .terraform
 .terraform.lock.hcl
 terraform.tfstate
