@@ -1,0 +1,72 @@
+data_dir       = "/var/consul"
+server         = true
+advertise_addr = "{{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}"
+client_addr    = "127.0.0.1 {{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}"
+
+bootstrap_expect = 3
+retry_join = [
+  {% for host in groups["consul_servers"] -%}
+  "{{ host }}.{{ local_cluster_domain }}",
+  {% endfor -%}
+]
+
+{#
+acl {
+  enabled = true
+  default_policy = "deny"
+  enable_token_persistence = true
+
+  tokens {
+    initial_management = "{{ consul_management_token }}"
+    agent              = "{{ consul_agent_token }}"
+  }
+}
+
+auto_config {
+  authorization {
+    enabled = true
+    static {
+      oidc_discovery_url = "http://vault-server1.cluster.local/v1/identity/oidc"
+      bound_issuer       = "http://vault-server1.cluster.local/v1/identity/oidc"
+      bound_audiences    = ["consul-cluster-dc1"]
+      claim_mappings = {
+          "/consul/hostname" = "node_name"
+      }
+      claim_assertions = [
+          "value.node_name == \"${node}\""
+      ]
+    }
+  }
+}
+#}
+
+ui_config {
+  enabled          = true
+  metrics_provider = "prometheus"
+  metrics_proxy {
+    base_url = "http://prometheus.service.consul:9090"
+  }
+}
+
+connect {
+  enabled = true
+}
+
+telemetry {
+  prometheus_retention_time = "10s"
+  disable_hostname          = true
+}
+
+## default configuration for envoy sidecar proxy
+# config_entries {
+#   bootstrap = [
+#     {
+#       Kind = "proxy-defaults"
+#       Name = "global"
+#       Config {
+#         # envoy listens by default on port 9102 for prometheus metrics
+#         envoy_prometheus_bind_addr = "0.0.0.0:9102"
+#       }
+#     }
+#   ]
+# }

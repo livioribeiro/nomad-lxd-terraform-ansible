@@ -1,0 +1,24 @@
+---
+- name: read consul root token
+  ansible.builtin.set_fact:
+    consul_root_token: '{{ "SecretID" | extract(lookup("file", "consul_acl_bootstrap.json") | from_json) }}'
+
+- name: generate agent token
+  ansible.builtin.command:
+    cmd: "consul acl token create -token='{{ consul_root_token }}' -description='{{ inventory_hostname }}' -node-identity='{{ inventory_hostname }}:dc1' -format=json"
+  register: agent_token_result
+
+- name: parse agent token
+  ansible.builtin.set_fact:
+    acl_agent_token_accessor_id: '{{ "AccessorID" | extract(agent_token_result.stdout | from_json) }}'
+    acl_agent_token: '{{ "SecretID" | extract(agent_token_result.stdout | from_json) }}'
+
+- name: save agent token
+  ansible.builtin.copy:
+    content: '{{ acl_agent_token }}'
+    dest: /etc/consul.d/agent-token.txt
+
+- name: save agent token accessor id
+  ansible.builtin.copy:
+    content: '{{ acl_agent_token_accessor_id }}'
+    dest: /etc/consul.d/agent-token-accessor-id.txt

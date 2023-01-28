@@ -1,0 +1,65 @@
+---
+- name: setup dns servers
+  hosts: dns_servers
+  roles:
+    - dns_server
+
+- name: setup dns clients
+  hosts: all
+  roles:
+    - dns_client
+
+- name: install consul service
+  hosts: consul_servers:nomad_servers:nomad_clients:vault_servers
+  roles:
+    - hashicorp_apt
+    - consul_service
+
+- name: setup consul servers
+  hosts: consul_servers
+  roles:
+    - consul_server
+    # - consul_dns
+
+- name: setup consul clients
+  hosts: nomad_servers:nomad_clients:vault_servers
+  roles:
+    - consul_client
+    # - consul_dns
+
+- name: setup vault
+  hosts: vault_servers
+  roles:
+    - vault_server
+
+- name: setup nfs server
+  hosts: nfs-server
+  roles:
+    - nfs_server
+
+- name: install nomad service
+  hosts: nomad_servers:nomad_clients
+  roles:
+    - nomad_service
+
+- name: setup nomad server
+  hosts: nomad_servers
+  roles:
+    - nomad_server
+
+- name: setup nomad client
+  hosts: nomad_clients
+  roles:
+    - nomad_client
+
+- name: setup load balancer
+  hosts: load-balancer
+  roles:
+    - load_balancer
+
+# - name: setup statsd exporter
+#   hosts: statsd-exporter
+#   roles:
+#     - consul_service
+#     - consul_client
+#     - statsd_exporter

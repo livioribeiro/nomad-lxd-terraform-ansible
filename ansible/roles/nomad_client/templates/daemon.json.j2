@@ -1,0 +1,3 @@
+{
+  "dns": {{ groups["dns_servers"] | map("extract", hostvars, "ansible_host") | list | to_json }}
+}

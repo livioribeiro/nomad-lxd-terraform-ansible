@@ -1,0 +1,12 @@
+---
+- name: install nomad
+  apt:
+    name: nomad
+    state: present
+
+- name: create nomad directory
+  file:
+    path: /var/nomad
+    state: directory
+    owner: nomad
+    group: nomad

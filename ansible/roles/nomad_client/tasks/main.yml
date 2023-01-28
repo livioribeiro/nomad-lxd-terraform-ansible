@@ -1,0 +1,108 @@
+---
+
+- name: install nfs-common
+  ansible.builtin.apt:
+    name: nfs-common
+    state: present
+
+- name: add envoy apt key
+  ansible.builtin.apt_key:
+    url: "{{ envoy_gpg_url }}"
+    state: present
+
+- name: add envoy apt repository
+  ansible.builtin.apt_repository:
+    repo: "{{ envoy_repo }}"
+    state: present
+
+- name: install envoy
+  ansible.builtin.apt:
+    name: getenvoy-envoy
+    state: present
+    update_cache: yes
+
+# required to mount nfs shares
+- name: make / shared
+  ansible.builtin.command: mount --make-shared /
+
+- name: make / shared at startup
+  ansible.builtin.cron:
+    name: make / shared at startup
+    special_time: reboot
+    job: mount --make-shared /
+
+- name: add docker apt key
+  ansible.builtin.apt_key:
+    url: "{{ docker_gpg_url }}"
+    state: present
+
+- name: add docker apt repository
+  ansible.builtin.apt_repository:
+    repo: "{{ docker_repo }}"
+    state: present
+
+- name: install docker
+  ansible.builtin.apt:
+    name: docker-ce
+    state: present
+    update_cache: yes
+
+- name: install dnsmasq
+  ansible.builtin.apt:
+    name: dnsmasq
+    state: present
+
+- name: copy dnsmasq config
+  ansible.builtin.template:
+    src: dnsmasq.conf.j2
+    dest: /etc/dnsmasq.conf
+  register: dnsmasq_config
+
+- name: restart dnsmasq
+  when: dnsmasq_config.changed
+  ansible.builtin.systemd:
+    name: dnsmasq
+    state: restarted
+
+- name: copy docker daemon config
+  ansible.builtin.copy:
+    src: daemon.json
+    dest: /etc/docker/daemon.json
+  register: docker_daemon_config
+
+- name: restart docker
+  when: docker_daemon_config.changed
+  ansible.builtin.systemd:
+    name: docker
+    state: restarted
+
+# - name: install openjdk
+#   apt:
+#     name: openjdk-17-jdk-headless
+#     state: present
+
+- name: create cni plugins directory
+  ansible.builtin.file:
+    path: /opt/cni/bin
+    state: directory
+
+- name: install cni plugins
+  ansible.builtin.unarchive:
+    src: "{{ cni_plugins_url }}"
+    remote_src: yes
+    dest: /opt/cni/bin/
+    mode: 0755
+    creates: /opt/cni/bin/bridge
+
+- name: copy nomad config
+  ansible.builtin.template:
+    src: nomad.hcl.j2
+    dest: /etc/nomad.d/nomad.hcl
+  register: nomad_config
+
+- name: restart nomad
+  when: nomad_config.changed
+  ansible.builtin.systemd:
+    name: nomad
+    state: restarted
+    enabled: yes

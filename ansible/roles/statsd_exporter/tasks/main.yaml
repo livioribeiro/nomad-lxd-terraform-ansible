@@ -1,0 +1,34 @@
+---
+- name: install statsd exporter
+  unarchive:
+    src: "{{ statsd_exporter_url }}"
+    remote_src: yes
+    dest: /usr/bin/
+    extra_opts: "--gzip --strip-components=1"
+    include: [statsd_exporter]
+    mode: 0755
+    creates: /usr/bin/statsd_exporter
+
+- name: copy service file
+  copy:
+    src: systemd.service
+    dest: /etc/systemd/system/
+
+- name: start service
+  ansible.builtin.systemd:
+    name: statsd-exporter
+    state: started
+    daemon_reload: true
+    enabled: true
+
+- name: register statsd-exporter service in consul
+  community.general.consul:
+    service_name: statsd-exporter
+    service_port: 9125
+
+- name: register statsd-exporter-metrics service in consul
+  community.general.consul:
+    service_name: statsd-exporter-metrics
+    service_port: 9102
+    tags:
+      - traefik.enable=true

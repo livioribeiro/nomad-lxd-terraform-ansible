@@ -1,0 +1,27 @@
+data_dir   = "/var/nomad"
+datacenter = "{{ datacenter }}"
+
+client {
+  enabled           = true
+  network_interface = "eth0"
+}
+
+acl {
+  enabled = true
+}
+
+telemetry {
+  prometheus_metrics         = true
+  disable_hostname           = true
+  publish_allocation_metrics = true
+  publish_node_metrics       = true
+}
+
+plugin "docker" {
+  config {
+    allow_privileged = true
+    volumes {
+      enabled = true
+    }
+  }
+}

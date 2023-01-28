@@ -1,0 +1,16 @@
+;
+; BIND data file for local cluster
+;
+$TTL	604800
+@	IN	SOA	cluster.local. root.cluster.local. (
+				  2		; Serial
+				12h		; Refresh
+				15m		; Retry
+				 4w		; Expire
+				 2h )	; Negative Cache TTL
+;
+@	IN	NS	dns-server1.cluster.local.
+@	IN	NS	dns-server2.cluster.local.
+{% for host in groups["all"] -%}
+{{ host }}	IN	A	{{ hostvars[host].ansible_host }}
+{% endfor -%}

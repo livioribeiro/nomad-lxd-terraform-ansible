@@ -1,0 +1,11 @@
+*.retry
+ssh/
+.terraform
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+root-token-*.txt
+ansible/consul_acl_bootstrap.json
+ansible/nomad_acl_bootstrap.json
+ansible/vault_init.json
+ansible/inventory/hosts

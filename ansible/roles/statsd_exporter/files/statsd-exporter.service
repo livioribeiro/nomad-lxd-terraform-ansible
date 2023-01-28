@@ -1,0 +1,12 @@
+[Unit]
+Description=StatsD Exporter
+After=multi-user.target
+
+[Service]
+ExecStart=/usr/bin/statsd_exporter
+Type=exec
+Restart=always
+
+[Install]
+WantedBy=default.target
+RequiredBy=network.target

@@ -1,0 +1,17 @@
+zone "cluster.local" {
+    type master;
+    file "/etc/bind/db.cluster.local";
+    allow-transfer { {{ hostvars["dns-server2"].ansible_host }}; };
+};
+
+zone "{{ reverse_dns_base }}.in-addr.arpa" {
+    type master;
+    file "/etc/bind/db.{{ reverse_dns_prefix }}";
+    allow-transfer { {{ hostvars["dns-server2"].ansible_host }}; };
+};
+
+zone "{{ apps_domain }}" {
+    type master;
+    file "/etc/bind/db.{{ apps_domain }}";
+    allow-transfer { {{ hostvars["dns-server2"].ansible_host }}; };
+};

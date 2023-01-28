@@ -1,0 +1,75 @@
+---
+
+- name: install vault
+  apt:
+    name: vault
+    state: present
+
+- name: create vault directory
+  file:
+    path: /var/vault
+    state: directory
+    owner: vault
+    group: vault
+
+- name: copy vault config
+  template:
+    src: vault.hcl.j2
+    dest: /etc/vault.d/vault.hcl
+  register: vault_config
+
+- name: restart vault
+  when: vault_config.changed
+  service:
+    name: vault
+    state: restarted
+    enabled: yes
+
+- name: initialize vault
+  run_once: true
+  ansible.builtin.command:
+    cmd: vault operator init -address=http://localhost:8200 -key-shares=1 -key-threshold=1 -format=json
+  register: init_result
+  failed_when:
+    - init_result.rc != 0
+    - '"Vault is already initialized" not in init_result.stderr'
+  changed_when:
+    - init_result.rc == 0
+
+- name: await for vault to fully initialize
+  when: init_result.changed
+  run_once: true
+  ansible.builtin.wait_for:
+    timeout: 30
+
+- name: save vault init json file
+  when: init_result.rc == 0
+  delegate_to: localhost
+  ansible.builtin.copy:
+    content: '{{ init_result.stdout }}'
+    dest: vault_init.json
+
+- name: check vault status
+  ansible.builtin.command:
+    cmd: vault status -address=http://localhost:8200 -format=json
+  register: vault_status_result
+  failed_when: vault_status_result.rc not in [0, 2]
+
+- name: parse vault status
+  ansible.builtin.set_fact:
+    vault_status: '{{ vault_status_result.stdout | from_json }}'
+
+- name: read vault init
+  when: vault_status["sealed"]
+  ansible.builtin.set_fact:
+    vault_init: '{{ lookup("ansible.builtin.file", "vault_init.json") | from_json }}'
+
+- name: unseal vault
+  when: vault_status["sealed"]
+  loop: '{{ vault_init["unseal_keys_hex"] }}'
+  ansible.builtin.command:
+    cmd: 'vault operator unseal -address=http://localhost:8200 {{ item }}'
+  register: unseal_result
+  until: unseal_result.rc == 0
+  retries: 10
+  delay: 15
