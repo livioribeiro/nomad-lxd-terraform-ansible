@@ -1,0 +1,35 @@
+zone "cluster.local" {
+    {% if ansible_hostname == "dns-server1" -%}
+    type master;
+    allow-transfer { {{ hostvars["dns-server2"].ansible_host }}; };
+    {% else -%}
+    type secondary;
+    masters { {{ hostvars["dns-server1"].ansible_host }}; };
+    {% endif -%}
+
+    file "/etc/bind/db.cluster.local";
+};
+
+zone "{{ reverse_dns_base }}.in-addr.arpa" {
+    {% if ansible_hostname == "dns-server1" -%}
+    type master;
+    allow-transfer { {{ hostvars["dns-server2"].ansible_host }}; };
+    {% else -%}
+    type secondary;
+    masters { {{ hostvars["dns-server1"].ansible_host }}; };
+    {% endif -%}
+
+    file "/etc/bind/db.{{ reverse_dns_prefix }}";
+};
+
+zone "{{ apps_subdomain }}" {
+    {% if ansible_hostname == "dns-server1" -%}
+    type master;
+    allow-transfer { {{ hostvars["dns-server2"].ansible_host }}; };
+    {% else -%}
+    type secondary;
+    masters { {{ hostvars["dns-server1"].ansible_host }}; };
+    {% endif -%}
+
+    file "/etc/bind/db.{{ apps_subdomain }}";
+};

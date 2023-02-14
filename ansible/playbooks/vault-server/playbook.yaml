@@ -1,0 +1,112 @@
+- name: Setup vault server
+  hosts: vault_servers
+  tasks:
+    - name: Include ca certificate
+      ansible.builtin.import_tasks: '{{ playbook_dir }}/../../tasks/ca-cert/tasks.yaml'
+
+    - name: Setup dns client
+      ansible.builtin.import_tasks: '{{ playbook_dir }}/../../tasks/dns-client/tasks.yaml'
+
+    - name: Setup consul client
+      ansible.builtin.import_tasks: '{{ playbook_dir }}/../../tasks/consul-client/tasks.yaml'
+
+    - name: Install vault
+      ansible.builtin.apt:
+        name: vault
+        state: present
+        update_cache: true
+
+    - name: Copy vault certs
+      loop: ["cert", "private_key"]
+      ansible.builtin.copy:
+        content: '{{ vault_certs[item] }}'
+        dest: '/etc/certs.d/{{ item }}.pem'
+        owner: vault
+        mode: 0644
+
+    - name: Copy vault cert with ca cert combined
+      ansible.builtin.copy:
+        content: '{{ vault_certs["private_key"] }}{{ vault_certs["cert"] }}'
+        dest: '/etc/certs.d/cert_combined.pem'
+        mode: 0644
+
+    - name: Copy vault config
+      ansible.builtin.template:
+        src: vault.hcl.j2
+        dest: /etc/vault.d/vault.hcl
+        owner: vault
+        mode: 0644
+      notify: Restart vault
+
+  handlers:
+    - name: Restart vault
+      ansible.builtin.systemd:
+        name: vault
+        state: restarted
+        enabled: true
+
+- name: Initialize vault
+  hosts: vault-server1
+  tasks:
+    - name: Initialize vault
+      run_once: true
+      ansible.builtin.command:
+        vault operator init -tls-skip-verify -key-shares=1 -key-threshold=1 -format=json
+      register: init_result
+      failed_when:
+        - init_result.rc != 0
+        - '"Vault is already initialized" not in init_result.stderr'
+      changed_when:
+        - init_result.rc == 0
+      notify:
+        - Save vault init json file
+        - Save vault root token
+
+  handlers:
+    - name: Save vault init json file
+      delegate_to: localhost
+      connection: local
+      ansible.builtin.copy:
+        content: '{{ init_result.stdout }}'
+        dest: '{{ playbook_dir }}/vault_init.json'
+        mode: 0644
+
+    - name: Save vault root token
+      delegate_to: localhost
+      connection: local
+      ansible.builtin.copy:
+        content: '{{ "root_token" | extract(init_result.stdout | from_json) }}'
+        dest: '{{ playbook_dir }}/../../../root_token_vault.txt'
+        mode: 0644
+
+- name: Unseal vault
+  hosts: vault_servers
+  tasks:
+    - name: Wait for vault to fully initialize
+      ansible.builtin.wait_for:
+        timeout: 30
+
+    - name: Check vault status
+      ansible.builtin.command:
+        vault status -tls-skip-verify -format=json
+      register: vault_status_result
+      failed_when: vault_status_result.rc not in [0, 2]
+
+    - name: Parse vault status
+      ansible.builtin.set_fact:
+        vault_status: '{{ vault_status_result.stdout | from_json }}'
+
+    - name: Read vault init
+      when: vault_status["sealed"]
+      ansible.builtin.set_fact:
+        vault_init: '{{ lookup("ansible.builtin.file", playbook_dir + "/vault_init.json") | from_json }}'
+
+    - name: Unseal vault
+      when: vault_status["sealed"]
+      loop: '{{ vault_init["unseal_keys_hex"] }}'
+      ansible.builtin.command:
+        'vault operator unseal -tls-skip-verify {{ item }}'
+      register: unseal_result
+      until: unseal_result.rc == 0
+      retries: 10
+      delay: 15

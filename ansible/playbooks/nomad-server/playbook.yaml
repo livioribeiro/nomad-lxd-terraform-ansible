@@ -1,0 +1,62 @@
+- name: Setup nomad server
+  hosts: nomad_servers
+  tasks:
+    - name: Include ca certificate
+      ansible.builtin.import_tasks: '{{ playbook_dir }}/../../tasks/ca-cert/tasks.yaml'
+
+    - name: Setup dns client
+      ansible.builtin.import_tasks: '{{ playbook_dir }}/../../tasks/dns-client/tasks.yaml'
+
+    - name: Setup consul client
+      ansible.builtin.import_tasks: '{{ playbook_dir }}/../../tasks/consul-client/tasks.yaml'
+
+    - name: Install nomad
+      ansible.builtin.apt:
+        name: nomad
+        state: present
+        update_cache: true
+
+    - name: Copy nomad certs
+      loop: ["cert", "private_key"]
+      ansible.builtin.copy:
+        content: '{{ nomad_certs[item] }}'
+        dest: '/etc/certs.d/{{ item }}.pem'
+        owner: nomad
+        mode: 0644
+
+    - name: Copy nomad config
+      ansible.builtin.template:
+        src: nomad.hcl.j2
+        dest: /etc/nomad.d/nomad.hcl
+        owner: nomad
+        mode: 0644
+      notify: Restart nomad
+
+  handlers:
+    - name: Restart nomad
+      ansible.builtin.service:
+        name: nomad
+        state: restarted
+        enabled: true
+
+- name: Bootstrap nomad acl
+  hosts: nomad-server1
+  tasks:
+    - name: Bootstrap nomad acl
+      ansible.builtin.command:
+        nomad acl bootstrap -address=https://localhost:4646 -tls-skip-verify -json
+      register: acl_bootstrap_result
+      failed_when:
+        - acl_bootstrap_result.rc != 0
+        - '"ACL bootstrap already done" not in acl_bootstrap_result.stderr'
+      changed_when:
+        - '"SecretID" in acl_bootstrap_result.stdout'
+      notify: Save nomad root token
+
+  handlers:
+    - name: Save nomad root token
+      delegate_to: localhost
+      connection: local
+      ansible.builtin.copy:
+        content: '{{ "SecretID" | extract(acl_bootstrap_result.stdout | from_json) }}'
+        dest: '{{ playbook_dir }}/../../../root_token_nomad.txt'

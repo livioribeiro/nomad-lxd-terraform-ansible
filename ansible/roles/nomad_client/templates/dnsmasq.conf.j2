@@ -1,7 +1,0 @@
-port=53
-interface=docker0
-no-dhcp-interface=docker0
-bind-interfaces
-no-resolv
-
-address=/.{{ apps_domain }}/{{ hostvars["load-balancer"].ansible_host }}

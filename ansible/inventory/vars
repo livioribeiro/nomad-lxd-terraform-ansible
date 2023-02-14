@@ -1,0 +1,14 @@
+[cluster]
+[cluster:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_user=ubuntu
+ansible_ssh_common_args=-o StrictHostKeyChecking=no
+ansible_become=true
+
+[nomad_infra_clients]
+[nomad_infra_clients:vars]
+datacenter=infra
+
+[nomad_apps_clients]
+[nomad_apps_clients:vars]
+datacenter=apps

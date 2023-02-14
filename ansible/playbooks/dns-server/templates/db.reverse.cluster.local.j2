@@ -1,0 +1,16 @@
+;
+; BIND reverse data file for cluster local
+;
+$TTL	604800
+@	IN	SOA	dns-server1.{{ local_cluster_domain }}. root.{{ local_cluster_domain }}. (
+				  3		; Serial
+				12h		; Refresh
+				15m		; Retry
+				 4w		; Expire
+				 2h )	; Negative Cache TTL
+;
+@	IN	NS	dns-server1.{{ local_cluster_domain }}.
+@	IN	NS	dns-server2.{{ local_cluster_domain }}.
+{% for host in groups["all"] -%}
+{{ hostvars[host].ansible_host | split(".") | last }}	IN	PTR	{{ host }}.{{ local_cluster_domain }}.
+{% endfor %}

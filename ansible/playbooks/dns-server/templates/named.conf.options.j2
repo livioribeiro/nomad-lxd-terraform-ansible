@@ -1,0 +1,19 @@
+acl "trusted" {
+    {% for host in groups["all"] -%}
+    {{ hostvars[host].ansible_host }};
+    {% endfor -%}
+};
+
+options {
+    directory "/var/cache/bind";
+    
+    recursion yes;                 # enables recursive queries
+    allow-recursion { trusted; };  # allows recursive queries from "trusted" clients
+    listen-on { {{ inventory_host }}; };   # ns1 private IP address - listen on private network only
+    allow-transfer { none; };      # disable zone transfers by default
+
+    forwarders {
+        9.9.9.9;
+        149.112.112.112;
+    };
+};

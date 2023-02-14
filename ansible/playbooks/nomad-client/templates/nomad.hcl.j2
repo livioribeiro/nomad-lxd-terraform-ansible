@@ -1,0 +1,48 @@
+data_dir   = "/opt/nomad/data"
+datacenter = "{{ datacenter }}"
+
+client {
+  enabled           = true
+  network_interface = "eth0"
+}
+
+acl {
+  enabled = true
+}
+
+tls {
+  http      = true
+  rpc       = true
+
+  ca_file   = "/etc/certs.d/ca.pem"
+  cert_file = "/etc/certs.d/cert.pem"
+  key_file  = "/etc/certs.d/private_key.pem"
+}
+
+consul {
+  token = "{{ consul_token }}"
+}
+
+vault {
+  enabled          = true
+  address          = "https://vault.service.consul:8200"
+  ca_path          = "/etc/certs.d/ca.pem"
+  cert_file        = "/etc/certs.d/cert.pem"
+  key_file         = "/etc/certs.d/private_key.pem"
+}
+
+telemetry {
+  prometheus_metrics         = true
+  disable_hostname           = true
+  publish_allocation_metrics = true
+  publish_node_metrics       = true
+}
+
+plugin "docker" {
+  config {
+    allow_privileged = true
+    volumes {
+      enabled = true
+    }
+  }
+}

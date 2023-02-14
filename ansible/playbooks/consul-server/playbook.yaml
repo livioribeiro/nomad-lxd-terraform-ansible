@@ -1,0 +1,87 @@
+- name: Setup consul server
+  hosts: consul_servers
+  tasks:
+    - name: Include ca certificate
+      ansible.builtin.import_tasks: '{{ playbook_dir }}/../../tasks/ca-cert/tasks.yaml'
+
+    - name: Setup dns client
+      ansible.builtin.import_tasks: '{{ playbook_dir }}/../../tasks/dns-client/tasks.yaml'
+
+    - name: Copy consul certs
+      loop: ["cert", "private_key"]
+      ansible.builtin.copy:
+        content: '{{ consul_certs[item] }}'
+        dest: '/etc/certs.d/{{ item }}.pem'
+        owner: consul
+        mode: 0644
+
+    - name: Save consul root token
+      run_once: true
+      delegate_to: localhost
+      connection: local
+      ansible.builtin.copy:
+        content: '{{ consul_management_token }}'
+        dest: '{{ playbook_dir }}/../../../root_token_consul.txt'
+        mode: 0644
+
+    - name: Define agent tokens
+      ansible.builtin.set_fact:
+        consul_agent_token: '{{ ("agent." + inventory_hostname) | to_uuid(namespace="6ba7b810-9dad-11d1-80b4-00c04fd430c8") }}'
+        # consul_default_token: '{{ ("default." + inventory_hostname) | to_uuid(namespace="6ba7b810-9dad-11d1-80b4-00c04fd430c8") }}'
+
+    - name: Copy consul config
+      ansible.builtin.template:
+        src: consul.hcl.j2
+        dest: /etc/consul.d/consul.hcl
+        owner: consul
+        mode: 0644
+      notify: Restart consul
+
+    - name: Copy dnsmasq config
+      ansible.builtin.copy:
+        content: server=/.service.consul/127.0.0.1#8600
+        dest: /etc/dnsmasq.d/consul.conf
+        mode: 0644
+      notify: Restart dnsmasq
+
+  handlers:
+    - name: Restart consul
+      ansible.builtin.systemd:
+        name: consul
+        state: restarted
+        enabled: true
+
+    - name: Restart dnsmasq
+      ansible.builtin.systemd:
+        name: dnsmasq
+        state: restarted
+        enabled: true
+
+- name: Bootstrap consul acl
+  hosts: consul-server1
+  tasks:
+    - name: Bootstrap consul acl
+      ansible.builtin.command:
+        consul acl bootstrap -format=json
+      register: acl_bootstrap_result
+      failed_when:
+        - acl_bootstrap_result.rc != 0
+        - '"ACL bootstrap no longer allowed" not in acl_bootstrap_result.stderr'
+      changed_when: '"SecretID" in acl_bootstrap_result.stdout'
+
+- name: Setup consul agent tokens
+  hosts: consul_servers
+  tasks:
+    - name: Create consul agent token
+      ansible.builtin.command:
+        consul acl token create
+          -http-addr https://localhost:8501
+          -token "{{ consul_management_token }}"
+          -description "{{ inventory_hostname }} agent token"
+          -node-identity "{{ ansible_hostname }}:dc1"
+          -secret "{{ consul_agent_token }}"
+      register: create_agent_token
+      failed_when:
+        - create_agent_token.rc != 0
+        - '"SecretID is already in use" not in create_agent_token.stderr'
+      changed_when: create_agent_token.rc == 0

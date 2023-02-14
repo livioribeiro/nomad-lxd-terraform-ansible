@@ -1,0 +1,77 @@
+---
+- name: Create consul certs dit
+  ansible.builtin.file:
+    path: /etc/certs.d/consul
+    state: directory
+    owner: consul
+    mode: 0755
+
+- name: Copy consul certs
+  loop: ["cert", "private_key"]
+  ansible.builtin.copy:
+    content: '{{ consul_certs[item] }}'
+    dest: '/etc/certs.d/consul/{{ item }}.pem'
+    owner: consul
+    mode: 0644
+
+- name: Define agent tokens
+  ansible.builtin.set_fact:
+    consul_agent_token: '{{ ("agent." + inventory_hostname) | to_uuid(namespace="6ba7b810-9dad-11d1-80b4-00c04fd430c8") }}'
+    # consul_default_token: '{{ ("default." + inventory_hostname) | to_uuid(namespace="6ba7b810-9dad-11d1-80b4-00c04fd430c8") }}'
+
+- name: Create agent token
+  ansible.builtin.command:
+    consul acl token create
+      -http-addr https://consul-server1.cluster.local:8501
+      -token "{{ consul_management_token }}"
+      -description "{{ inventory_hostname }} agent token"
+      -node-identity "{{ ansible_hostname }}:dc1"
+      -secret "{{ consul_agent_token }}"
+  register: create_agent_token
+  failed_when:
+    - create_agent_token.rc != 0
+    - '"SecretID is already in use" not in create_agent_token.stderr'
+  changed_when: create_agent_token.rc == 0
+
+# - name: Create consul default token
+#   ansible.builtin.command:
+#     consul acl token create
+#       -http-addr https://consul-server1.cluster.local:8501
+#       -token "{{ consul_management_token }}"
+#       -description "{{ inventory_hostname }} default token"
+#       -role-name "consul-agent"
+#       -secret "{{ consul_default_token }}"
+#   register: create_default_token
+#   failed_when:
+#     - create_default_token.rc != 0
+#     - '"SecretID is already in use" not in create_default_token.stderr'
+#   changed_when: create_default_token.rc == 0
+
+- name: Copy consul config
+  ansible.builtin.template:
+    src: consul.hcl.j2
+    dest: /etc/consul.d/consul.hcl
+    owner: consul
+    mode: 0644
+  register: consul_config
+
+- name: Restart consul
+  when: consul_config.changed
+  ansible.builtin.systemd:
+    name: consul
+    state: restarted
+    enabled: true
+
+- name: Copy dnsmasq consul config
+  ansible.builtin.copy:
+    src: consul-dns.conf
+    dest: /etc/dnsmasq.d/
+    mode: 0644
+  register: dnsmasq_config
+
+- name: Restart dnsmasq
+  when: dnsmasq_config.changed
+  ansible.builtin.systemd:
+    name: dnsmasq
+    state: restarted
+

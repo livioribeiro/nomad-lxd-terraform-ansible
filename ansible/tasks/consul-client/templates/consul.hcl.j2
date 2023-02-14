@@ -1,0 +1,37 @@
+data_dir       = "/opt/consul"
+server         = false
+advertise_addr = "{{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}"
+client_addr    = "127.0.0.1 {{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}"
+
+retry_join = [
+  {% for host in groups["consul_servers"] -%}
+  "{{ host }}.{{ local_cluster_domain }}",
+  {% endfor -%}
+]
+
+ports {
+  https    = 8501
+  grpc     = 8502
+  grpc_tls = 8503
+}
+
+connect {
+  enabled = true
+}
+
+tls {
+  defaults {
+    ca_file   = "/etc/certs.d/ca.pem"
+    cert_file = "/etc/certs.d/consul/cert.pem"
+    key_file  = "/etc/certs.d/consul/private_key.pem"
+  }
+}
+
+acl {
+  enabled = true
+  tokens {
+    agent   = "{{ consul_agent_token }}"
+  }
+}
+
+encrypt = "{{ consul_encrypt_key }}"

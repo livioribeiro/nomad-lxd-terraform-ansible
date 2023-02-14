@@ -1,0 +1,31 @@
+---
+- name: Install dnsmasq
+  ansible.builtin.apt:
+    name: dnsmasq
+    state: present
+    update_cache: true
+
+- name: Copy dnsmasq config
+  ansible.builtin.template:
+    src: dnsmasq.conf.j2
+    dest: /etc/dnsmasq.conf
+    mode: 0644
+  register: dnsmasq_config
+
+- name: Restart dnsmasq
+  when: dnsmasq_config.changed
+  ansible.builtin.systemd:
+    name: dnsmasq
+    state: restarted
+
+- name: Copy resolv.conf
+  ansible.builtin.copy:
+    src: resolv.conf
+    dest: /etc/resolv.conf
+    mode: 0644
+
+- name: Disable systemd-resolved
+  ansible.builtin.systemd:
+    name: systemd-resolved
+    state: stopped
+    enabled: false

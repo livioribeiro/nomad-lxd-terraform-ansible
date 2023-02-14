@@ -1,0 +1,69 @@
+- name: Setup nomad client
+  hosts: nomad_clients
+  tasks:
+    - name: Include ca certificate
+      ansible.builtin.import_tasks: '{{ playbook_dir }}/../../tasks/ca-cert/tasks.yaml'
+
+    - name: Setup dns client
+      ansible.builtin.import_tasks: '{{ playbook_dir }}/../../tasks/dns-client/tasks.yaml'
+
+    - name: Setup consul client
+      ansible.builtin.import_tasks: '{{ playbook_dir }}/../../tasks/consul-client/tasks.yaml'
+
+    - name: Copy nomad certs
+      loop: ["cert", "private_key"]
+      ansible.builtin.copy:
+        content: '{{ nomad_certs[item] }}'
+        dest: '/etc/certs.d/{{ item }}.pem'
+        owner: nomad
+        mode: 0644
+
+    # required to mount nfs shares
+    - name: Make / shared
+      ansible.builtin.command: mount --make-shared /
+
+    - name: Make / shared at startup
+      ansible.builtin.cron:
+        name: make / shared at startup
+        special_time: reboot
+        job: mount --make-shared /
+
+    - name: Copy docker daemon config
+      ansible.builtin.copy:
+        src: daemon.json
+        dest: /etc/docker/
+        mode: 0644
+      notify: Restart docker
+
+    - name: Copy dnsmasq config
+      ansible.builtin.copy:
+        content: |
+          listen-address=172.17.0.1
+          no-dhcp-interface=docker0
+        dest: /etc/dnsmasq.d/docker.conf
+      notify: Restart dnsmasq
+
+    - name: Copy nomad config
+      ansible.builtin.template:
+        src: nomad.hcl.j2
+        dest: /etc/nomad.d/nomad.hcl
+        owner: nomad
+        mode: 0644
+      notify: Restart nomad
+
+  handlers:
+    - name: Restart docker
+      ansible.builtin.systemd:
+        name: docker
+        state: restarted
+
+    - name: Restart dnsmasq
+      ansible.builtin.systemd:
+        name: dnsmasq
+        state: restarted
+
+    - name: Restart nomad
+      ansible.builtin.systemd:
+        name: nomad
+        state: restarted
+        enabled: true

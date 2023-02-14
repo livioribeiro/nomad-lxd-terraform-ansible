@@ -43,7 +43,7 @@ job "countdash" {
       }
 
       env {
-        PORT = "${NOMAD_PORT_http}"
+        PORT = "9001"
       }
 
       resources {

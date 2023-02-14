@@ -1,0 +1,11 @@
+port=53
+listen-address=127.0.0.1
+no-dhcp-interface=lo
+bind-interfaces
+no-resolv
+
+server=/.{{ local_cluster_domain }}/{{ hostvars["dns-server1"].ansible_host }}
+server=/.{{ local_cluster_domain }}/{{ hostvars["dns-server2"].ansible_host }}
+server=9.9.9.9
+
+address=/.{{ apps_subdomain }}/{{ hostvars["load-balancer"].ansible_host }}

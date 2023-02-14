@@ -1,11 +1,6 @@
-resource "lxd_cached_image" "ubuntu_base" {
-  source_remote = "images"
-  source_image  = "ubuntu/${var.ubuntu_version}/cloud"
-}
-
 resource "lxd_network" "nomad" {
-  name    = "lxdnomadbr0"
-  type    = "bridge"
+  name = "lxdnomadbr0"
+  type = "bridge"
 
   config = {
     "ipv4.address" = "10.99.0.1/24"
@@ -16,7 +11,7 @@ resource "lxd_network" "nomad" {
 }
 
 resource "lxd_profile" "nomad" {
-  name    = "nomad"
+  name = "nomad"
 
   device {
     type = "nic"
