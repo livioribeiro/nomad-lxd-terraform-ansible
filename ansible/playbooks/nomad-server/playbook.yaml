@@ -59,4 +59,5 @@
       connection: local
       ansible.builtin.copy:
         content: '{{ "SecretID" | extract(acl_bootstrap_result.stdout | from_json) }}'
-        dest: '{{ playbook_dir }}/../../../root_token_nomad.txt'
+        dest: '{{ root_dir }}/.tmp/root_token_nomad.txt'
+        mode: 0644

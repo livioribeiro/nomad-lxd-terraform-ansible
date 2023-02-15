@@ -1,6 +1,4 @@
 locals {
-  consul_management_token = uuidv5("dns", "management.consul.cluster.local")
-
   dns_servers = {
     for i in [1, 2] : "dns-server${i}" => "10.99.0.${i + 1}"
   }

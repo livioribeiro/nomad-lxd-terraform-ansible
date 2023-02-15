@@ -1,6 +1,8 @@
 resource "lxd_container" "nfs_server" {
+  depends_on = [module.packer]
+
   name     = local.nfs_server.name
-  image    = module.packer.image_base
+  image    = "local:base"
   profiles = [lxd_profile.nomad.name]
 
   config = {

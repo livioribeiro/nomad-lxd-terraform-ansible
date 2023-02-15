@@ -1,6 +1,4 @@
 *.retry
-ssh/
-certs/
 .cache/
 .tmp/
 .terraform/
@@ -11,4 +9,3 @@ terraform.tfstate.backup
 ansible/playbooks/vault-server/vault_init.json
 ansible/inventory/hosts
 ansible/inventory/vars.json
-root_token_*.txt

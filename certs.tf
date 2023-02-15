@@ -24,7 +24,7 @@ resource "tls_self_signed_cert" "nomad_cluster" {
 }
 
 resource "local_file" "cluster_ca_cert" {
-  filename = "${path.module}/certs/ca.pem"
+  filename = "${path.module}/.tmp/certs/ca.pem"
   content  = tls_self_signed_cert.nomad_cluster.cert_pem
 }
 
@@ -63,17 +63,17 @@ resource "tls_locally_signed_cert" "consul" {
 }
 
 resource "local_file" "consul_private_key" {
-  filename = "${path.module}/certs/consul/private_key.pem"
+  filename = "${path.module}/.tmp/certs/consul/private_key.pem"
   content  = tls_private_key.consul.private_key_pem
 }
 
 resource "local_file" "consul_public_key" {
-  filename = "${path.module}/certs/consul/public_key.pem"
+  filename = "${path.module}/.tmp/certs/consul/public_key.pem"
   content  = tls_private_key.consul.public_key_pem
 }
 
 resource "local_file" "consul_cert" {
-  filename = "${path.module}/certs/consul/cert.pem"
+  filename = "${path.module}/.tmp/certs/consul/cert.pem"
   content  = tls_locally_signed_cert.consul.cert_pem
 }
 
@@ -112,17 +112,17 @@ resource "tls_locally_signed_cert" "vault" {
 }
 
 resource "local_file" "vault_private_key" {
-  filename = "${path.module}/certs/vault/private_key.pem"
+  filename = "${path.module}/.tmp/certs/vault/private_key.pem"
   content  = tls_private_key.vault.private_key_pem
 }
 
 resource "local_file" "vault_public_key" {
-  filename = "${path.module}/certs/vault/public_key.pem"
+  filename = "${path.module}/.tmp/certs/vault/public_key.pem"
   content  = tls_private_key.vault.public_key_pem
 }
 
 resource "local_file" "vault_cert" {
-  filename = "${path.module}/certs/vault/cert.pem"
+  filename = "${path.module}/.tmp/certs/vault/cert.pem"
   content  = tls_locally_signed_cert.vault.cert_pem
 }
 
@@ -161,16 +161,16 @@ resource "tls_locally_signed_cert" "nomad" {
 }
 
 resource "local_file" "nomad_private_key" {
-  filename = "${path.module}/certs/nomad/private_key.pem"
+  filename = "${path.module}/.tmp/certs/nomad/private_key.pem"
   content  = tls_private_key.nomad.private_key_pem
 }
 
 resource "local_file" "nomad_public_key" {
-  filename = "${path.module}/certs/nomad/public_key.pem"
+  filename = "${path.module}/.tmp/certs/nomad/public_key.pem"
   content  = tls_private_key.nomad.public_key_pem
 }
 
 resource "local_file" "nomad_cert" {
-  filename = "${path.module}/certs/nomad/cert.pem"
+  filename = "${path.module}/.tmp/certs/nomad/cert.pem"
   content  = tls_locally_signed_cert.nomad.cert_pem
 }

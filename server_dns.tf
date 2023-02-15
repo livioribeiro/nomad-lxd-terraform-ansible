@@ -1,8 +1,9 @@
 resource "lxd_container" "dns_server" {
+  depends_on = [module.packer]
   for_each   = local.dns_servers
 
   name     = each.key
-  image    = module.packer.image_base
+  image    = "local:base"
   profiles = [lxd_profile.nomad.name]
 
   config = {

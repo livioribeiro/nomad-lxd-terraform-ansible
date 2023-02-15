@@ -1,8 +1,9 @@
 resource "lxd_container" "nomad_infra_client" {
+  depends_on = [module.packer]
   for_each   = local.nomad_infra_clients
 
   name     = each.key
-  image    = module.packer.image_nomad_client
+  image    = "local:nomad-client"
   profiles = [lxd_profile.nomad.name]
 
   config = {
@@ -35,10 +36,11 @@ resource "lxd_container" "nomad_infra_client" {
 }
 
 resource "lxd_container" "nomad_apps_client" {
+  depends_on = [module.packer]
   for_each   = local.nomad_apps_clients
 
   name     = each.key
-  image    = module.packer.image_nomad_client
+  image    = "local:nomad-client"
   profiles = [lxd_profile.nomad.name]
 
   config = {
@@ -111,7 +113,7 @@ data "consul_acl_token_secret_id" "nomad_client" {
 }
 
 resource "local_file" "nomad_client_ansible_vars" {
-  filename = "${path.module}/.tmp/nomad_client_ansible_vars.json"
+  filename = "${path.module}/.tmp/ansible/nomad_client_vars.json"
   content = jsonencode({
     consul_token = data.consul_acl_token_secret_id.nomad_client.secret_id
   })

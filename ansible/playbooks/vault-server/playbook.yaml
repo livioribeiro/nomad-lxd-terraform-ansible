@@ -49,9 +49,8 @@
   hosts: vault-server1
   tasks:
     - name: Initialize vault
-      run_once: true
       ansible.builtin.command:
-        vault operator init -tls-skip-verify -key-shares=1 -key-threshold=1 -format=json
+        vault operator init -tls-skip-verify -key-shares=3 -key-threshold=2 -format=json
       register: init_result
       failed_when:
         - init_result.rc != 0
@@ -68,7 +67,7 @@
       connection: local
       ansible.builtin.copy:
         content: '{{ init_result.stdout }}'
-        dest: '{{ playbook_dir }}/vault_init.json'
+        dest: '{{ root_dir }}/.tmp/vault_init.json'
         mode: 0644
 
     - name: Save vault root token
@@ -76,7 +75,7 @@
       connection: local
       ansible.builtin.copy:
         content: '{{ "root_token" | extract(init_result.stdout | from_json) }}'
-        dest: '{{ playbook_dir }}/../../../root_token_vault.txt'
+        dest: '{{ root_dir }}/.tmp/root_token_vault.txt'
         mode: 0644
 
 - name: Unseal vault
@@ -99,7 +98,7 @@
     - name: Read vault init
       when: vault_status["sealed"]
       ansible.builtin.set_fact:
-        vault_init: '{{ lookup("ansible.builtin.file", playbook_dir + "/vault_init.json") | from_json }}'
+        vault_init: '{{ lookup("ansible.builtin.file", root_dir + "/.tmp/vault_init.json") | from_json }}'
 
     - name: Unseal vault
       when: vault_status["sealed"]

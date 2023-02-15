@@ -7,6 +7,7 @@ resource "local_file" "ansible_vars" {
   content = jsonencode({
     all = {
       vars = {
+        root_dir                = abspath(path.module)
         ubuntu_version          = var.ubuntu_version
         external_domain         = var.external_domain
         apps_subdomain          = var.apps_subdomain

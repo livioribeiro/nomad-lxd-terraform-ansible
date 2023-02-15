@@ -56,7 +56,7 @@ provider "lxd" {
 data "local_file" "consul_root_token" {
   depends_on = [null_resource.provision_consul_server]
 
-  filename = "${path.module}/root_token_consul.txt"
+  filename = "${path.module}/.tmp/root_token_consul.txt"
 }
 
 provider "consul" {
@@ -66,24 +66,10 @@ provider "consul" {
   ca_pem  = tls_self_signed_cert.nomad_cluster.cert_pem
 }
 
-/*
-# Vault
-data "local_file" "vault_root_token" {
-  depends_on = [null_resource.provision_vault_server]
-  filename = "${path.module}/root_token_vault.txt"
-}
-
-provider "vault" {
-  address      = "${lxd_container.vault_server["vault-server1"].ipv4_address}:8200"
-  token        = data.local_file.vault_root_token.content
-  ca_cert_dir  = "${path.module}/certs"
-}
-*/
-
 # Nomad
 data "local_file" "nomad_root_token" {
   depends_on = [null_resource.provision_nomad_server]
-  filename   = "${path.module}/root_token_nomad.txt"
+  filename   = "${path.module}/.tmp/root_token_nomad.txt"
 }
 
 provider "nomad" {

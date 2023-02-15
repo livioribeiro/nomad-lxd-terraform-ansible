@@ -1,8 +1,18 @@
+locals {
+  consul_management_token = uuidv5("dns", "management.consul.cluster.local")
+}
+
+resource "local_file" "consul_management_token" {
+  filename = "${path.module}/.tmp/root_token_consul.txt"
+  content  = local.consul_management_token
+}
+
 resource "lxd_container" "consul_server" {
+  depends_on = [module.packer]
   for_each   = local.consul_servers
 
   name     = each.key
-  image    = module.packer.image_consul
+  image    = "local:consul"
   profiles = [lxd_profile.nomad.name]
 
   config = {

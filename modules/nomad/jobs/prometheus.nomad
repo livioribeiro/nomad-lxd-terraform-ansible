@@ -165,6 +165,13 @@ scrape_configs:
     params:
       format: [prometheus]
 
+  - job_name: consul_connect_statsd_envoy_metrics
+    consul_sd_configs:
+    - server: '{{ env "NOMAD_IP_prometheus" }}:8500'
+      token: '${var.consul_acl_token}'
+      services: [statsd]
+
+
   - job_name: consul_connect_envoy_metrics
     
     consul_sd_configs:

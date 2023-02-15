@@ -1,6 +1,8 @@
 resource "lxd_container" "load_balancer" {
+  depends_on = [module.packer]
+
   name     = local.load_balancer.name
-  image    = module.packer.image_base
+  image    = "local:base"
   profiles = [lxd_profile.nomad.name]
 
   config = {

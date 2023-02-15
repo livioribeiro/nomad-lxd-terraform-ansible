@@ -15,15 +15,6 @@
         owner: consul
         mode: 0644
 
-    - name: Save consul root token
-      run_once: true
-      delegate_to: localhost
-      connection: local
-      ansible.builtin.copy:
-        content: '{{ consul_management_token }}'
-        dest: '{{ playbook_dir }}/../../../root_token_consul.txt'
-        mode: 0644
-
     - name: Define agent tokens
       ansible.builtin.set_fact:
         consul_agent_token: '{{ ("agent." + inventory_hostname) | to_uuid(namespace="6ba7b810-9dad-11d1-80b4-00c04fd430c8") }}'
@@ -60,6 +51,10 @@
 - name: Bootstrap consul acl
   hosts: consul-server1
   tasks:
+    - name: Wait for consul to fully initialize
+      ansible.builtin.wait_for:
+        timeout: 30
+
     - name: Bootstrap consul acl
       ansible.builtin.command:
         consul acl bootstrap -format=json

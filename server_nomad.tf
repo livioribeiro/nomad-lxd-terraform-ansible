@@ -1,8 +1,9 @@
 resource "lxd_container" "nomad_server" {
+  depends_on = [module.packer]
   for_each = local.nomad_servers
 
   name     = each.key
-  image    = module.packer.image_consul
+  image    = "local:consul"
   profiles = [lxd_profile.nomad.name]
 
   config = {
@@ -74,7 +75,7 @@ data "local_file" "vault_nomad_token" {
 }
 
 resource "local_file" "nomad_ansible_vars" {
-  filename = "${path.module}/.tmp/nomad_ansible_vars.json"
+  filename = "${path.module}/.tmp/ansible/nomad_vars.json"
   content = jsonencode({
     consul_token = data.consul_acl_token_secret_id.nomad_server.secret_id
     vault_token  = data.local_file.vault_nomad_token.content
