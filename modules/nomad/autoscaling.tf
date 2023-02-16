@@ -3,7 +3,7 @@ resource "nomad_namespace" "system_autoscaling" {
 }
 
 resource "nomad_job" "autoscaler" {
-  jobspec = file("${path.module}/jobs/autoscaler.nomad")
+  jobspec = file("${path.module}/jobs/autoscaler.nomad.hcl")
   # detach = false
 
   hcl2 {

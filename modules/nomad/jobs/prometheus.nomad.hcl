@@ -27,7 +27,6 @@ job "metrics" {
     count = 1
 
     network {
-      mode = "bridge"
       port "prometheus" {
         static = 9090
       }
@@ -38,10 +37,6 @@ job "metrics" {
       interval = "30m"
       delay    = "15s"
       mode     = "fail"
-    }
-
-    ephemeral_disk {
-      size = 300
     }
 
     task "prometheus" {
@@ -72,13 +67,11 @@ job "metrics" {
       }
 
       template {
-        change_mode = "noop"
         destination = "local/prometheus.yml"
 
-        data = <<EOF
+        data = <<EOT
 # Source:
 # https://learn.hashicorp.com/tutorials/nomad/prometheus-metrics
-# https://www.mattmoriarity.com/2021-02-21-scraping-prometheus-metrics-with-nomad-and-consul-connect/
 ---
 
 global:
@@ -86,8 +79,8 @@ global:
   evaluation_interval: 5s
 
 scrape_configs:
+  # CONSUL
   - job_name: consul_metrics
-
     consul_sd_configs:
     - server: '{{ env "NOMAD_IP_prometheus" }}:8500'
       token: '${var.consul_acl_token}'
@@ -108,8 +101,8 @@ scrape_configs:
       target_label: __address__
       replacement: $${1}:8501
 
+  # VAULT
   - job_name: vault_metrics
-
     consul_sd_configs:
     - server: '{{ env "NOMAD_IP_prometheus" }}:8500'
       token: '${var.consul_acl_token}'
@@ -125,8 +118,8 @@ scrape_configs:
     tls_config:
       insecure_skip_verify: true
 
+  # NOMAD
   - job_name: nomad_metrics
-
     consul_sd_configs:
     - server: '{{ env "NOMAD_IP_prometheus" }}:8500'
       token: '${var.consul_acl_token}'
@@ -146,15 +139,8 @@ scrape_configs:
     params:
       format: [prometheus]
 
-  - job_name: proxy_metrics
-
-    consul_sd_configs:
-      - server: '{{ env "NOMAD_IP_prometheus" }}:8500'
-        token: '${var.consul_acl_token}'
-        services: [proxy]
-
+  # NOMAD AUTOSCALER
   - job_name: nomad_autoscaler
-
     consul_sd_configs:
     - server: '{{ env "NOMAD_IP_prometheus" }}:8500'
       token: '${var.consul_acl_token}'
@@ -165,15 +151,23 @@ scrape_configs:
     params:
       format: [prometheus]
 
+  # PROXY/TRAEFIK
+  - job_name: proxy_metrics
+    consul_sd_configs:
+    - server: '{{ env "NOMAD_IP_prometheus" }}:8500'
+      token: '${var.consul_acl_token}'
+      services: [proxy]
+
+  # CONSUL CONNECT ENVOY STATSD
   - job_name: consul_connect_statsd_envoy_metrics
     consul_sd_configs:
     - server: '{{ env "NOMAD_IP_prometheus" }}:8500'
       token: '${var.consul_acl_token}'
       services: [statsd]
 
-
+  # CONSUL CONNECT ENVOY
+  # https://www.mattmoriarity.com/2021-02-21-scraping-prometheus-metrics-with-nomad-and-consul-connect/
   - job_name: consul_connect_envoy_metrics
-    
     consul_sd_configs:
       - server: '{{ env "NOMAD_IP_prometheus" }}:8500'
         token: '${var.consul_acl_token}'
@@ -189,7 +183,7 @@ scrape_configs:
       regex: ([^:]+)(?::\d+)?;(\d+)
       replacement: $${1}:$${2}
       target_label: __address__
-EOF
+EOT
       }
     }
   }

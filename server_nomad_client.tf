@@ -9,7 +9,7 @@ resource "lxd_container" "nomad_infra_client" {
   config = {
     "user.access_interface" = "eth0"
     "cloud-init.network-config" = templatefile(
-      "${path.module}/config/network-config.yaml",
+      "${path.module}/cloud-init/network-config.yaml",
       { address = each.value }
     )
     "limits.cpu"          = 1
@@ -46,7 +46,7 @@ resource "lxd_container" "nomad_apps_client" {
   config = {
     "user.access_interface" = "eth0"
     "cloud-init.network-config" = templatefile(
-      "${path.module}/config/network-config.yaml",
+      "${path.module}/cloud-init/network-config.yaml",
       { address = each.value }
     )
     "limits.cpu"          = 1
@@ -73,6 +73,10 @@ resource "lxd_container" "nomad_apps_client" {
 }
 
 resource "consul_acl_policy" "nomad_client" {
+  depends_on = [
+    null_resource.provision_consul_server
+  ]
+
   name  = "nomad-client"
   rules = <<-EOT
     agent_prefix "" {
@@ -131,3 +135,14 @@ resource "null_resource" "provision_nomad_client" {
     command     = "ansible-playbook playbooks/nomad-client/playbook.yaml -e @../${local_file.nomad_client_ansible_vars.filename}"
   }
 }
+
+# resource "null_resource" "provision_nomad_client_docker_registry" {
+#   depends_on = [
+#     module.nomad
+#   ]
+
+#   provisioner "local-exec" {
+#     working_dir = "ansible"
+#     command     = "ansible-playbook playbooks/nomad-client/configure-registry.yaml"
+#   }
+# }

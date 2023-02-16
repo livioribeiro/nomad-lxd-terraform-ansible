@@ -8,7 +8,7 @@ resource "lxd_container" "load_balancer" {
   config = {
     "user.access_interface" = "eth0"
     "cloud-init.network-config" = templatefile(
-      "${path.module}/config/network-config.yaml",
+      "${path.module}/cloud-init/network-config.yaml",
       { address = local.load_balancer.host }
     )
   }

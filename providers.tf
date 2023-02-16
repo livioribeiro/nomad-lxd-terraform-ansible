@@ -52,17 +52,10 @@ provider "lxd" {
   generate_client_certificates = true
 }
 
-# Consul
-data "local_file" "consul_root_token" {
-  depends_on = [null_resource.provision_consul_server]
-
-  filename = "${path.module}/.tmp/root_token_consul.txt"
-}
-
 provider "consul" {
   address = "${lxd_container.consul_server["consul-server1"].ipv4_address}:8501"
   scheme  = "https"
-  token   = data.local_file.consul_root_token.content
+  token   = local.consul_management_token
   ca_pem  = tls_self_signed_cert.nomad_cluster.cert_pem
 }
 

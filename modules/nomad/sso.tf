@@ -3,17 +3,17 @@ resource "nomad_namespace" "system_sso" {
 }
 
 resource "nomad_external_volume" "sso_database_data" {
+  depends_on = [
+    data.nomad_plugin.nfs
+  ]
+
   type         = "csi"
   plugin_id    = "nfs"
   volume_id    = "sso-database-data"
   name         = "sso-database-data"
-  namespace    = "system-sso"
+  namespace    = nomad_namespace.system_sso.name
   capacity_min = "250MiB"
   capacity_max = "500MiB"
-
-  depends_on = [
-    data.nomad_plugin.nfs
-  ]
 
   capability {
     access_mode     = "single-node-writer"
@@ -22,17 +22,14 @@ resource "nomad_external_volume" "sso_database_data" {
 }
 
 resource "nomad_job" "sso" {
-  jobspec = file("${path.module}/jobs/keycloak.nomad")
+  jobspec = file("${path.module}/jobs/keycloak.nomad.hcl")
   # detach = false
-
-  depends_on = [
-    nomad_external_volume.sso_database_data
-  ]
 
   hcl2 {
     enabled = true
     vars = {
-      namespace = nomad_namespace.system_sso.name
+      namespace   = nomad_namespace.system_sso.name
+      volume_name = nomad_external_volume.sso_database_data.name
     }
   }
 }

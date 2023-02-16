@@ -41,6 +41,7 @@
           listen-address=172.17.0.1
           no-dhcp-interface=docker0
         dest: /etc/dnsmasq.d/docker.conf
+        mode: 0644
       notify: Restart dnsmasq
 
     - name: Copy nomad config

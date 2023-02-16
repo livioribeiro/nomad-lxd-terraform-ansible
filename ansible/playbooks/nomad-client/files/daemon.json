@@ -1,3 +1,6 @@
 {
-    "dns": ["172.17.0.1"]
+    "dns": ["172.17.0.1"],
+    "registry-mirrors": [
+        "http://docker-registry.service.consul:5000"
+    ]
 }

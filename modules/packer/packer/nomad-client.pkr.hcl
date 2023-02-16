@@ -49,13 +49,13 @@ build {
   sources = ["source.lxd.nomad_client"]
 
   provisioner "file" {
-    content     = "deb [arch=amd64 signed-by=/usr/share/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu ${var.ubuntu_version} stable"
     destination = "/etc/apt/sources.list.d/docker.list"
+    content     = "deb [arch=amd64 signed-by=/usr/share/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu ${var.ubuntu_version} stable"
   }
 
   provisioner "file" {
-    content     = "deb [arch=amd64 signed-by=/usr/share/keyrings/getenvoy.gpg] https://deb.dl.getenvoy.io/public/deb/ubuntu ${var.ubuntu_version} main"
     destination = "/etc/apt/sources.list.d/getenvoy.list"
+    content     = "deb [arch=amd64 signed-by=/usr/share/keyrings/getenvoy.gpg] https://deb.dl.getenvoy.io/public/deb/ubuntu ${var.ubuntu_version} main"
   }
 
   provisioner "shell" {
@@ -72,7 +72,7 @@ build {
       "wget -O /tmp/cni-plugins.tgz ${local.cni_plugins_url}",
       "tar -vxf /tmp/cni-plugins.tgz -C /opt/cni/bin",
       "rm /tmp/cni-plugins.tgz",
-      "usermod -aG docker nomad"
+      "usermod -aG docker nomad",
     ]
   }
 }

@@ -9,7 +9,7 @@ resource "lxd_container" "vault_server" {
   config = {
     "user.access_interface" = "eth0"
     "cloud-init.network-config" = templatefile(
-      "${path.module}/config/network-config.yaml",
+      "${path.module}/cloud-init/network-config.yaml",
       { address = each.value }
     )
   }
@@ -27,6 +27,10 @@ resource "lxd_container" "vault_server" {
 }
 
 resource "consul_acl_policy" "vault_server" {
+  depends_on = [
+    null_resource.provision_consul_server
+  ]
+
   name  = "vault-server"
   rules = <<-EOT
     service "vault" {

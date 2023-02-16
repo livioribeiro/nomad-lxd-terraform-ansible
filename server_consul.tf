@@ -18,7 +18,7 @@ resource "lxd_container" "consul_server" {
   config = {
     "user.access_interface" = "eth0"
     "cloud-init.network-config" = templatefile(
-      "${path.module}/config/network-config.yaml",
+      "${path.module}/cloud-init/network-config.yaml",
       { address = each.value }
     )
   }

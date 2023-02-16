@@ -28,15 +28,30 @@ build {
   name = "base"
   sources = ["source.lxd.base"]
 
+  provisioner "file" {
+    destination = "/etc/dnsmasq.conf"
+    content = <<-EOT
+      port=53
+      listen-address=127.0.0.1
+      no-dhcp-interface=lo
+      bind-interfaces
+      no-resolv
+
+      server=1.1.1.1
+      server=1.0.0.1
+    EOT
+  }
+
   provisioner "shell" {
     environment_vars = [
       "DEBIAN_FRONTEND=noninteractive"
     ]
 
     inline = [
+      "echo '${var.ssh_key}' > /home/ubuntu/.ssh/authorized_keys",
       "apt-get update",
       "apt-get install -y openssh-server",
-      "echo '${var.ssh_key}' > /home/ubuntu/.ssh/authorized_keys",
+      "apt-get install -o 'DPkg::Options::=--force-confdef' -y dnsmasq",
     ]
   }
 }

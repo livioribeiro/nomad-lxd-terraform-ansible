@@ -3,7 +3,7 @@ resource "nomad_namespace" "system_storage" {
 }
 
 resource "nomad_job" "rocketduck_nfs_controller" {
-  jobspec = file("${path.module}/jobs/rocketduck-nfs/controller.nomad")
+  jobspec = file("${path.module}/jobs/rocketduck-nfs/controller.nomad.hcl")
   # detach = false
 
   hcl2 {
@@ -16,7 +16,7 @@ resource "nomad_job" "rocketduck_nfs_controller" {
 }
 
 resource "nomad_job" "rocketduck_nfs_node" {
-  jobspec = file("${path.module}/jobs/rocketduck-nfs/node.nomad")
+  jobspec = file("${path.module}/jobs/rocketduck-nfs/node.nomad.hcl")
   # detach = false
 
   hcl2 {

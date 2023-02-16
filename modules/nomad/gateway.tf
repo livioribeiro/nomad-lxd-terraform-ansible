@@ -39,7 +39,7 @@ resource "nomad_namespace" "system_gateway" {
 }
 
 resource "nomad_job" "proxy" {
-  jobspec = file("${path.module}/jobs/proxy.nomad")
+  jobspec = file("${path.module}/jobs/proxy.nomad.hcl")
   # detach = false
 
   hcl2 {

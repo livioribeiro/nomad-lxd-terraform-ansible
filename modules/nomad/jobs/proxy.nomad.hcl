@@ -1,6 +1,6 @@
 variable "version" {
   type    = string
-  default = "v3.0"
+  default = "v2.9"
 }
 
 variable "proxy_suffix" {

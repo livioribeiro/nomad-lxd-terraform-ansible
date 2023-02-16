@@ -43,7 +43,7 @@ resource "nomad_namespace" "system_monitoring" {
 }
 
 resource "nomad_job" "prometheus" {
-  jobspec = file("${path.module}/jobs/prometheus.nomad")
+  jobspec = file("${path.module}/jobs/prometheus.nomad.hcl")
   # detach = false
 
   hcl2 {
@@ -55,8 +55,8 @@ resource "nomad_job" "prometheus" {
   }
 }
 
-resource "nomad_job" "stats_exporter" {
-  jobspec = file("${path.module}/jobs/statsd-exporter.nomad")
+resource "nomad_job" "statsd_exporter" {
+  jobspec = file("${path.module}/jobs/statsd-exporter.nomad.hcl")
   # detach = false
 
   hcl2 {
@@ -65,4 +65,69 @@ resource "nomad_job" "stats_exporter" {
       namespace = nomad_namespace.system_monitoring.name
     }
   }
+}
+
+resource "nomad_job" "loki" {
+  jobspec = file("${path.module}/jobs/loki.nomad.hcl")
+  # detach = false
+
+  hcl2 {
+    enabled = true
+    vars = {
+      namespace = nomad_namespace.system_monitoring.name
+    }
+  }
+}
+
+resource "nomad_job" "promtail" {
+  jobspec = file("${path.module}/jobs/promtail.nomad.hcl")
+  # detach = false
+
+  hcl2 {
+    enabled = true
+    vars = {
+      namespace = nomad_namespace.system_monitoring.name
+    }
+  }
+}
+
+resource "consul_config_entry" "logging_intention" {
+  kind = "service-intentions"
+  name = "logging-loki"
+
+  config_json = jsonencode({
+    Sources = [
+      {
+        Name   = "logging-promtail"
+        Action = "allow"
+      }
+    ]
+  })
+}
+
+# Grafana
+resource "nomad_job" "grafana" {
+  jobspec = file("${path.module}/jobs/grafana.nomad.hcl")
+  # detach = false
+
+  hcl2 {
+    enabled = true
+    vars = {
+      namespace = nomad_namespace.system_monitoring.name
+    }
+  }
+}
+
+resource "consul_config_entry" "grafana_loki_intention" {
+  kind = "service-intentions"
+  name = "logging-loki"
+
+  config_json = jsonencode({
+    Sources = [
+      {
+        Name   = "grafana"
+        Action = "allow"
+      }
+    ]
+  })
 }

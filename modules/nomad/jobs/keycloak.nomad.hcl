@@ -13,6 +13,11 @@ variable "namespace" {
   default = "system-sso"
 }
 
+variable "volume_name" {
+  type    = string
+  default = "sso-database-data"
+}
+
 job "sso" {
   datacenters = ["apps"]
   type        = "service"
@@ -64,24 +69,25 @@ job "sso" {
 
       connect {
         sidecar_service {
+          tags = ["traefik.enable=false"]
+
           proxy {
             upstreams {
               destination_name = "sso-database"
-              local_bind_port = 5432
+              local_bind_port  = 5432
             }
           }
-          tags = ["traefik.enable=false"]
         }
         sidecar_task {
           resources {
             cpu    = 50
-            memory = 30
+            memory = 50
           }
         }
       }
     }
 
-    task "sso" {
+    task "keycloak" {
       driver = "docker"
 
       config {
@@ -98,8 +104,8 @@ job "sso" {
         KC_LOG_LEVEL             = "WARN,io.quarkus:INFO,org.infinispan.CONTAINER:INFO"
         KC_HOSTNAME              = "sso.apps.localhost"
         KC_DB                    = "postgres"
-        KC_DB_URL_HOST           = "${NOMAD_UPSTREAM_IP}"
-        KC_DB_URL_PORT           = "${NOMAD_UPSTREAM_PORT}"
+        KC_DB_URL_HOST           = "${NOMAD_UPSTREAM_IP_sso_database}"
+        KC_DB_URL_PORT           = "${NOMAD_UPSTREAM_PORT_sso_database}"
         KC_DB_URL_DATABASE       = "sso"
         KC_DB_USERNAME           = "sso"
         KC_DB_PASSWORD           = "sso"
@@ -117,13 +123,14 @@ job "sso" {
 
   group "database" {
     count = 1
+
     update {
       max_parallel = 0
     }
 
     volume "data" {
       type            = "csi"
-      source          = "sso-database-data"
+      source          = var.volume_name
       read_only       = false
       attachment_mode = "file-system"
       access_mode     = "single-node-writer"
@@ -142,7 +149,7 @@ job "sso" {
         sidecar_task {
           resources {
             cpu    = 50
-            memory = 30
+            memory = 50
           }
         }
       }

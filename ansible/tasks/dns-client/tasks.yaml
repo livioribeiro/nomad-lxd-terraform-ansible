@@ -1,14 +1,8 @@
 ---
-- name: Install dnsmasq
-  ansible.builtin.apt:
-    name: dnsmasq
-    state: present
-    update_cache: true
-
 - name: Copy dnsmasq config
   ansible.builtin.template:
     src: dnsmasq.conf.j2
-    dest: /etc/dnsmasq.conf
+    dest: /etc/dnsmasq.d/cluster.conf
     mode: 0644
   register: dnsmasq_config
 

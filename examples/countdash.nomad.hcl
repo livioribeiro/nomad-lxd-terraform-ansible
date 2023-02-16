@@ -67,13 +67,14 @@ job "countdash" {
 
       connect {
         sidecar_service {
+          tags = ["traefik.enable=false"]
+
           proxy {
             upstreams {
               destination_name = "count-api"
               local_bind_port = 8080
             }
           }
-          tags = ["traefik.enable=false"]
         }
         sidecar_task {
           resources {
