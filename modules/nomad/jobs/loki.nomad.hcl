@@ -91,7 +91,6 @@ job "loki" {
         destination   = "local/loki.yaml"
         change_mode   = "signal"
         change_signal = "SIGHUP"
-        destination   = "local/config/loki.yml"
 
         data = <<-EOT
           auth_enabled: false
