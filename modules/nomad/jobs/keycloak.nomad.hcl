@@ -81,7 +81,7 @@ job "sso" {
         sidecar_task {
           resources {
             cpu    = 50
-            memory = 50
+            memory = 32
           }
         }
       }
@@ -149,7 +149,7 @@ job "sso" {
         sidecar_task {
           resources {
             cpu    = 50
-            memory = 50
+            memory = 32
           }
         }
       }

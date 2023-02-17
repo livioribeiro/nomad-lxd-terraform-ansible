@@ -3,11 +3,11 @@ resource "random_id" "consul_encrypt_key" {
 }
 
 resource "local_file" "ansible_vars" {
-  filename = "${path.module}/ansible/inventory/vars.json"
+  filename = "${path.module}/.tmp/ansible/inventory/vars.json"
   content = jsonencode({
     all = {
       vars = {
-        root_dir                = abspath(path.module)
+        root_tmp_dir            = "${abspath(path.module)}/.tmp"
         ubuntu_version          = var.ubuntu_version
         external_domain         = var.external_domain
         apps_subdomain          = var.apps_subdomain
@@ -33,7 +33,7 @@ resource "local_file" "ansible_vars" {
 }
 
 resource "local_file" "ansible_hosts" {
-  filename = "${path.module}/ansible/inventory/hosts"
+  filename = "${path.module}/.tmp/ansible/inventory/hosts"
   content  = <<EOT
 [dns_servers]
 %{for name, host in local.dns_servers~}

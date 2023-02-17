@@ -8,6 +8,11 @@ variable "namespace" {
   default = "system-autoscaling"
 }
 
+variable "promtail_version" {
+  type    = string
+  default = "2.7.2"
+}
+
 job "autoscaler" {
   type        = "service"
   datacenters = ["infra"]
@@ -17,7 +22,65 @@ job "autoscaler" {
     count = 1
 
     network {
+      mode = "bridge"
+
       port "http" {}
+      port "promtail" {}
+    }
+
+    service {
+      name = "autoscaler"
+      port = "http"
+      task = "autoscaler"
+
+      connect {
+        sidecar_service {
+          proxy {
+            upstreams {
+              destination_name = "prometheus"
+              local_bind_port  = 9090
+            }
+          }
+        }
+
+        sidecar_task {
+          resources {
+            cpu    = 50
+            memory = 32
+          }
+        }
+      }
+
+      check {
+        type     = "http"
+        path     = "/v1/health"
+        interval = "3s"
+        timeout  = "1s"
+      }
+    }
+
+    service {
+      name = "autoscaler-promtail"
+      port = "promtail"
+      task = "promtail"
+
+      connect {
+        sidecar_service {
+          proxy {
+            upstreams {
+              destination_name = "loki"
+              local_bind_port  = 3100
+            }
+          }
+        }
+
+        sidecar_task {
+          resources {
+            cpu    = 50
+            memory = 32
+          }
+        }
+      }
     }
 
     task "autoscaler" {
@@ -52,10 +115,16 @@ job "autoscaler" {
       #   destination = "/usr/local/bin"
       # }
 
+      resources {
+        cpu    = 50
+        memory = 128
+      }
+
       template {
+        destination = "${NOMAD_TASK_DIR}/config.hcl"
         data = <<EOF
 nomad {
-  address = "http://{{env "attr.unique.network.ip-address" }}:4646"
+  address = "http://{{ env "attr.unique.network.ip-address" }}:4646"
 }
 
 telemetry {
@@ -66,7 +135,7 @@ telemetry {
 apm "prometheus" {
   driver = "prometheus"
   config = {
-    address = "http://prometheus.service.consul:9090"
+    address = "http://{{ env "NOMAD_UPSTREAM_ADDR_prometheus" }}"
   }
 }
 
@@ -74,25 +143,62 @@ strategy "target-value" {
   driver = "target-value"
 }
 EOF
+      }
+    }
 
-        destination = "${NOMAD_TASK_DIR}/config.hcl"
+    task "promtail" {
+      driver = "docker"
+
+      lifecycle {
+        hook    = "prestart"
+        sidecar = true
+      }
+
+      config {
+        image = "grafana/promtail:${var.promtail_version}"
+        ports = ["promtail"]
+        args = ["-config.file=local/promtail.yaml"]
       }
 
       resources {
         cpu    = 50
-        memory = 128
+        memory = 32
       }
 
-      service {
-        name = "autoscaler"
-        port = "http"
+      template {
+        destination = "local/promtail.yaml"
 
-        check {
-          type     = "http"
-          path     = "/v1/health"
-          interval = "3s"
-          timeout  = "1s"
-        }
+        data = <<EOH
+server:
+  http_listen_port: {{ env "NOMAD_PORT_promtail" }}
+  grpc_listen_port: 0
+positions:
+  filename: /tmp/positions.yaml
+client:
+  url: http://{{ env "NOMAD_UPSTREAM_ADDR_loki" }}/api/prom/push
+scrape_configs:
+- job_name: system
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      task: autoscaler
+      __path__: /alloc/logs/autoscaler*
+  pipeline_stages:
+  - match:
+      selector: '{task="autoscaler"}'
+      stages:
+      - regex:
+          expression: '.*policy_id=(?P<policy_id>[a-zA-Z0-9_-]+).*source=(?P<source>[a-zA-Z0-9_-]+).*strategy=(?P<strategy>[a-zA-Z0-9_-]+).*target=(?P<target>[a-zA-Z0-9_-]+).*Group:(?P<group>[a-zA-Z0-9]+).*Job:(?P<job>[a-zA-Z0-9_-]+).*Namespace:(?P<namespace>[a-zA-Z0-9_-]+)'
+      - labels:
+          policy_id:
+          source:
+          strategy:
+          target:
+          group:
+          job:
+          namespace:
+EOH
       }
     }
   }

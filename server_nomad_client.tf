@@ -1,5 +1,9 @@
 resource "lxd_container" "nomad_infra_client" {
-  depends_on = [module.packer]
+  depends_on = [
+    module.packer,
+    lxd_container.nomad_server
+  ]
+
   for_each   = local.nomad_infra_clients
 
   name     = each.key
@@ -36,7 +40,11 @@ resource "lxd_container" "nomad_infra_client" {
 }
 
 resource "lxd_container" "nomad_apps_client" {
-  depends_on = [module.packer]
+  depends_on = [
+    module.packer,
+    lxd_container.nomad_server
+  ]
+
   for_each   = local.nomad_apps_clients
 
   name     = each.key
@@ -135,14 +143,3 @@ resource "null_resource" "provision_nomad_client" {
     command     = "ansible-playbook playbooks/nomad-client/playbook.yaml -e @../${local_file.nomad_client_ansible_vars.filename}"
   }
 }
-
-# resource "null_resource" "provision_nomad_client_docker_registry" {
-#   depends_on = [
-#     module.nomad
-#   ]
-
-#   provisioner "local-exec" {
-#     working_dir = "ansible"
-#     command     = "ansible-playbook playbooks/nomad-client/configure-registry.yaml"
-#   }
-# }

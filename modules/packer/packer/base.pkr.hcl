@@ -37,8 +37,8 @@ build {
       bind-interfaces
       no-resolv
 
-      server=1.1.1.1
-      server=1.0.0.1
+      server=9.9.9.9
+      server=149.112.112.112
     EOT
   }
 
@@ -52,6 +52,17 @@ build {
       "apt-get update",
       "apt-get install -y openssh-server",
       "apt-get install -o 'DPkg::Options::=--force-confdef' -y dnsmasq",
+
+      "systemctl stop systemd-resolved",
+      "systemctl disable systemd-resolved",
     ]
+  }
+
+  provisioner "file" {
+    destination = "/etc/resolv.conf"
+    content = <<-EOT
+      127.0.0.1
+      options edns0 trust-ad
+    EOT
   }
 }

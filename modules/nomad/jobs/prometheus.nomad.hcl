@@ -26,12 +26,6 @@ job "metrics" {
   group "prometheus" {
     count = 1
 
-    network {
-      port "prometheus" {
-        static = 9090
-      }
-    }
-
     restart {
       attempts = 2
       interval = "30m"
@@ -39,31 +33,53 @@ job "metrics" {
       mode     = "fail"
     }
 
+    network {
+      mode = "bridge"
+
+      port "prometheus" {
+        static = 9090
+      }
+    }
+
+    service {
+      name = "prometheus"
+      tags = ["traefik.enable=true"]
+      port = "${NOMAD_PORT_prometheus}"
+
+      connect {
+        sidecar_service {}
+
+        sidecar_task {
+          resources {
+            cpu    = 50
+            memory = 32
+          }
+        }
+      }
+
+      check {
+        name     = "prometheus port alive"
+        type     = "http"
+        path     = "/-/healthy"
+        interval = "10s"
+        timeout  = "2s"
+      }
+    }
+
     task "prometheus" {
       driver = "docker"
 
       config {
         image = "prom/prometheus:${var.version}"
+        ports = ["prometheus"]
 
         volumes = [
           "local/prometheus.yml:/etc/prometheus/prometheus.yml",
         ]
-
-        ports = ["prometheus"]
       }
 
-      service {
-        name = "prometheus"
-        tags = ["traefik.enable=true"]
-        port = "prometheus"
-
-        check {
-          name     = "prometheus port alive"
-          type     = "http"
-          path     = "/-/healthy"
-          interval = "10s"
-          timeout  = "2s"
-        }
+      env {
+        CONSUL_ADDR = "${attr.unique.network.ip-address}:8500"
       }
 
       template {
@@ -82,7 +98,7 @@ scrape_configs:
   # CONSUL
   - job_name: consul_metrics
     consul_sd_configs:
-    - server: '{{ env "NOMAD_IP_prometheus" }}:8500'
+    - server: '{{ env "CONSUL_ADDR" }}:8500'
       token: '${var.consul_acl_token}'
       services: [consul]
 
@@ -104,7 +120,7 @@ scrape_configs:
   # VAULT
   - job_name: vault_metrics
     consul_sd_configs:
-    - server: '{{ env "NOMAD_IP_prometheus" }}:8500'
+    - server: '{{ env "attr.unique.network.ip-address" }}:8500'
       token: '${var.consul_acl_token}'
       services: [vault]
       tags: [active]
@@ -121,7 +137,7 @@ scrape_configs:
   # NOMAD
   - job_name: nomad_metrics
     consul_sd_configs:
-    - server: '{{ env "NOMAD_IP_prometheus" }}:8500'
+    - server: '{{ env "attr.unique.network.ip-address" }}:8500'
       token: '${var.consul_acl_token}'
       services: [nomad-client, nomad]
 
@@ -142,7 +158,7 @@ scrape_configs:
   # NOMAD AUTOSCALER
   - job_name: nomad_autoscaler
     consul_sd_configs:
-    - server: '{{ env "NOMAD_IP_prometheus" }}:8500'
+    - server: '{{ env "attr.unique.network.ip-address" }}:8500'
       token: '${var.consul_acl_token}'
       services: [autoscaler]
 
@@ -154,14 +170,14 @@ scrape_configs:
   # PROXY/TRAEFIK
   - job_name: proxy_metrics
     consul_sd_configs:
-    - server: '{{ env "NOMAD_IP_prometheus" }}:8500'
+    - server: '{{ env "attr.unique.network.ip-address" }}:8500'
       token: '${var.consul_acl_token}'
       services: [proxy]
 
   # CONSUL CONNECT ENVOY STATSD
   - job_name: consul_connect_statsd_envoy_metrics
     consul_sd_configs:
-    - server: '{{ env "NOMAD_IP_prometheus" }}:8500'
+    - server: '{{ env "attr.unique.network.ip-address" }}:8500'
       token: '${var.consul_acl_token}'
       services: [statsd]
 
@@ -169,7 +185,7 @@ scrape_configs:
   # https://www.mattmoriarity.com/2021-02-21-scraping-prometheus-metrics-with-nomad-and-consul-connect/
   - job_name: consul_connect_envoy_metrics
     consul_sd_configs:
-      - server: '{{ env "NOMAD_IP_prometheus" }}:8500'
+      - server: '{{ env "attr.unique.network.ip-address" }}:8500'
         token: '${var.consul_acl_token}'
 
     relabel_configs:
@@ -183,7 +199,7 @@ scrape_configs:
       regex: ([^:]+)(?::\d+)?;(\d+)
       replacement: $${1}:$${2}
       target_label: __address__
-EOT
+        EOT
       }
     }
   }

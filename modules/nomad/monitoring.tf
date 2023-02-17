@@ -91,14 +91,14 @@ resource "nomad_job" "promtail" {
   }
 }
 
-resource "consul_config_entry" "logging_intention" {
+resource "consul_config_entry" "promtail_loki_intention" {
   kind = "service-intentions"
-  name = "logging-loki"
+  name = "loki"
 
   config_json = jsonencode({
     Sources = [
       {
-        Name   = "logging-promtail"
+        Name   = "system-promtail"
         Action = "allow"
       }
     ]
@@ -118,9 +118,23 @@ resource "nomad_job" "grafana" {
   }
 }
 
+resource "consul_config_entry" "grafana_prometheus_intention" {
+  kind = "service-intentions"
+  name = "prometheus"
+
+  config_json = jsonencode({
+    Sources = [
+      {
+        Name   = "grafana"
+        Action = "allow"
+      }
+    ]
+  })
+}
+
 resource "consul_config_entry" "grafana_loki_intention" {
   kind = "service-intentions"
-  name = "logging-loki"
+  name = "loki"
 
   config_json = jsonencode({
     Sources = [

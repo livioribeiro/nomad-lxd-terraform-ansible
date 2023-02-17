@@ -35,15 +35,20 @@ job "grafana" {
 
           proxy {
             upstreams {
-              destination_name = "logging-loki"
+              destination_name = "loki"
               local_bind_port  = 3100
+            }
+
+            upstreams {
+              destination_name = "prometheus"
+              local_bind_port  = 9090
             }
           }
         }
         sidecar_task {
           resources {
             cpu    = 50
-            memory = 50
+            memory = 32
           }
         }
       }
@@ -88,7 +93,7 @@ job "grafana" {
 
       resources {
         cpu    = 250
-        memory = 500
+        memory = 320
       }
     }
   }

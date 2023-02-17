@@ -35,11 +35,6 @@ terraform {
       version = "~>2.17"
     }
 
-    vault = {
-      source  = "hashicorp/vault"
-      version = "~>3.12"
-    }
-
     nomad = {
       source  = "hashicorp/nomad"
       version = "~> 1.4"
@@ -62,6 +57,7 @@ provider "consul" {
 # Nomad
 data "local_file" "nomad_root_token" {
   depends_on = [null_resource.provision_nomad_server]
+
   filename   = "${path.module}/.tmp/root_token_nomad.txt"
 }
 

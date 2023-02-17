@@ -10,6 +10,5 @@ ethernets:
         via: 10.99.0.1
     nameservers:
       addresses:
-        - 1.1.1.1
         - 10.99.0.2
         - 10.99.0.3

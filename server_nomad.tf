@@ -1,5 +1,9 @@
 resource "lxd_container" "nomad_server" {
-  depends_on = [module.packer]
+  depends_on = [
+    module.packer,
+    lxd_container.consul_server,
+  ]
+
   for_each = local.nomad_servers
 
   name     = each.key
@@ -69,7 +73,7 @@ data "consul_acl_token_secret_id" "nomad_server" {
 
 # Vault token
 data "local_file" "vault_nomad_token" {
-  depends_on = [null_resource.vault_nomad_acl]
+  depends_on = [null_resource.vault_acls]
 
   filename = "vault/vault_nomad_token.txt"
 }

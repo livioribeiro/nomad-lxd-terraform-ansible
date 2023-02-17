@@ -67,7 +67,7 @@
       connection: local
       ansible.builtin.copy:
         content: '{{ init_result.stdout }}'
-        dest: '{{ root_dir }}/.tmp/vault_init.json'
+        dest: '{{ root_tmp_dir }}/vault_init.json'
         mode: 0644
 
     - name: Save vault root token
@@ -75,7 +75,7 @@
       connection: local
       ansible.builtin.copy:
         content: '{{ "root_token" | extract(init_result.stdout | from_json) }}'
-        dest: '{{ root_dir }}/.tmp/root_token_vault.txt'
+        dest: '{{ root_tmp_dir }}/root_token_vault.txt'
         mode: 0644
 
 - name: Unseal vault
@@ -98,7 +98,7 @@
     - name: Read vault init
       when: vault_status["sealed"]
       ansible.builtin.set_fact:
-        vault_init: '{{ lookup("ansible.builtin.file", root_dir + "/.tmp/vault_init.json") | from_json }}'
+        vault_init: '{{ lookup("ansible.builtin.file", root_tmp_dir + "/vault_init.json") | from_json }}'
 
     - name: Unseal vault
       when: vault_status["sealed"]
