@@ -34,7 +34,7 @@ backend vault_dashboard
 
 backend nomad_dashboard
   {% for host in groups["nomad_servers"] -%}
-  server {{ host }} {{ hostvars[host].ansible_host }}:4646 ssl verify none
+  server {{ host }} {{ hostvars[host].ansible_host }}:4646 ssl verify none crt /etc/certs.d/nomad/cert_combined.pem
   {% endfor %}
 
 backend traefik_dashboard

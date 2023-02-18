@@ -92,8 +92,8 @@ job "grafana" {
       }
 
       resources {
-        cpu    = 250
-        memory = 320
+        cpu    = 200
+        memory = 256
       }
     }
   }

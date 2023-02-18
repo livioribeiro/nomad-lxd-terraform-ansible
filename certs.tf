@@ -36,7 +36,10 @@ resource "tls_private_key" "consul" {
 
 resource "tls_cert_request" "consul" {
   private_key_pem = tls_private_key.consul.private_key_pem
-  dns_names       = concat(["localhost", "server.dc1.consul"], [for s in keys(local.consul_servers) : "${s}.${var.local_cluster_domain}"])
+  dns_names       = concat(
+    ["localhost", "server.dc1.consul", "consul.service.consul"],
+    [for s in keys(local.consul_servers) : "${s}.${var.local_cluster_domain}"]
+  )
   ip_addresses    = concat(["127.0.0.1"], values(local.consul_servers))
 
   subject {
@@ -85,7 +88,10 @@ resource "tls_private_key" "vault" {
 
 resource "tls_cert_request" "vault" {
   private_key_pem = tls_private_key.vault.private_key_pem
-  dns_names       = concat(["localhost"], [for s in keys(local.vault_servers) : "${s}.${var.local_cluster_domain}"])
+  dns_names       = concat(
+    ["localhost", "vault.service.consul", "*.vault.service.consul"],
+    [for s in keys(local.vault_servers) : "${s}.${var.local_cluster_domain}"]
+  )
   ip_addresses    = concat(["127.0.0.1"], values(local.vault_servers))
 
   subject {
@@ -134,7 +140,10 @@ resource "tls_private_key" "nomad_server" {
 
 resource "tls_cert_request" "nomad_server" {
   private_key_pem = tls_private_key.nomad_server.private_key_pem
-  dns_names       = concat(["localhost", "server.global.nomad"], [for s in keys(local.nomad_servers) : "${s}.${var.local_cluster_domain}"])
+  dns_names       = concat(
+    ["localhost", "server.global.nomad", "nomad.service.consul"],
+    [for s in keys(local.nomad_servers) : "${s}.${var.local_cluster_domain}"]
+  )
   ip_addresses    = concat(["127.0.0.1"], values(local.nomad_servers))
 
   subject {
@@ -185,7 +194,7 @@ resource "tls_cert_request" "nomad_client" {
   private_key_pem = tls_private_key.nomad_client.private_key_pem
   # dns_names       = concat(["localhost", "client.global.nomad"], [for s in keys(local.nomad_clients) : "${s}.${var.local_cluster_domain}"])
   # ip_addresses    = concat(["127.0.0.1"], values(local.nomad_clients))
-  dns_names = ["localhost", "client.global.nomad"]
+  dns_names = ["localhost", "client.global.nomad", "nomad-client.service.consul"]
   ip_addresses = ["127.0.0.1"]
 
   subject {

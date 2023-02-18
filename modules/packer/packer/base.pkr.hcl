@@ -48,6 +48,7 @@ build {
     ]
 
     inline = [
+      "mkdir -p /home/ubuntu/.ssh",
       "echo '${var.ssh_key}' > /home/ubuntu/.ssh/authorized_keys",
       "apt-get update",
       "apt-get install -y openssh-server",
