@@ -2,6 +2,10 @@ resource "random_id" "consul_encrypt_key" {
   byte_length = 32
 }
 
+resource "random_id" "nomad_encrypt_key" {
+  byte_length = 32
+}
+
 resource "local_file" "ansible_vars" {
   filename = "${path.module}/.tmp/ansible/inventory/vars.json"
   content = jsonencode({
@@ -12,20 +16,29 @@ resource "local_file" "ansible_vars" {
         external_domain         = var.external_domain
         apps_subdomain          = var.apps_subdomain
         local_cluster_domain    = var.local_cluster_domain
+        ca_cert                 = tls_self_signed_cert.nomad_cluster.cert_pem
         consul_management_token = local.consul_management_token
         consul_encrypt_key      = random_id.consul_encrypt_key.b64_std
-        ca_cert                 = tls_self_signed_cert.nomad_cluster.cert_pem
+        nomad_encrypt_key       = random_id.nomad_encrypt_key.b64_std
+
         consul_certs = {
           cert        = tls_locally_signed_cert.consul.cert_pem
           private_key = tls_private_key.consul.private_key_pem
         }
+
         vault_certs = {
           cert        = tls_locally_signed_cert.vault.cert_pem
           private_key = tls_private_key.vault.private_key_pem
         }
-        nomad_certs = {
-          cert        = tls_locally_signed_cert.nomad.cert_pem
-          private_key = tls_private_key.nomad.private_key_pem
+
+        nomad_server_certs = {
+          cert        = tls_locally_signed_cert.nomad_server.cert_pem
+          private_key = tls_private_key.nomad_server.private_key_pem
+        }
+
+        nomad_client_certs = {
+          cert        = tls_locally_signed_cert.nomad_client.cert_pem
+          private_key = tls_private_key.nomad_client.private_key_pem
         }
       }
     }

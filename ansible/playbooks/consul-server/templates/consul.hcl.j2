@@ -16,7 +16,18 @@ tls {
     ca_file   = "/etc/certs.d/ca.pem"
     cert_file = "/etc/certs.d/cert.pem"
     key_file  = "/etc/certs.d/private_key.pem"
+
+    verify_incoming = true
+    verify_outgoing = true
   }
+
+  internal_rpc {
+    verify_server_hostname = true
+  }
+}
+
+auto_encrypt {
+  allow_tls = true
 }
 
 encrypt = "{{ consul_encrypt_key }}"

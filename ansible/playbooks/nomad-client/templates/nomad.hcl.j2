@@ -17,6 +17,9 @@ tls {
   ca_file   = "/etc/certs.d/ca.pem"
   cert_file = "/etc/certs.d/cert.pem"
   key_file  = "/etc/certs.d/private_key.pem"
+
+  verify_server_hostname = true
+  verify_https_client    = true
 }
 
 consul {

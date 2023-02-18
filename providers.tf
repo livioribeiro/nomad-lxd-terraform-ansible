@@ -52,6 +52,8 @@ provider "consul" {
   scheme  = "https"
   token   = local.consul_management_token
   ca_pem  = tls_self_signed_cert.nomad_cluster.cert_pem
+  cert_pem = tls_locally_signed_cert.consul.cert_pem
+  key_pem = tls_private_key.consul.private_key_pem
 }
 
 # Nomad
@@ -65,4 +67,6 @@ provider "nomad" {
   address   = "https://${lxd_container.nomad_server["nomad-server1"].ipv4_address}:4646"
   secret_id = data.local_file.nomad_root_token.content
   ca_pem    = tls_self_signed_cert.nomad_cluster.cert_pem
+  cert_pem  = tls_locally_signed_cert.nomad_server.cert_pem
+  key_pem   = tls_private_key.nomad_server.private_key_pem
 }

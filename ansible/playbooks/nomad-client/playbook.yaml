@@ -13,7 +13,7 @@
     - name: Copy nomad certs
       loop: ["cert", "private_key"]
       ansible.builtin.copy:
-        content: '{{ nomad_certs[item] }}'
+        content: '{{ nomad_client_certs[item] }}'
         dest: '/etc/certs.d/{{ item }}.pem'
         owner: nomad
         mode: 0644

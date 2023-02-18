@@ -22,6 +22,8 @@ locals {
 }
 
 locals {
+  nomad_clients = merge(local.nomad_infra_clients, local.nomad_apps_clients)
+
   all_servers = merge(
     local.dns_servers,
     local.consul_servers,
