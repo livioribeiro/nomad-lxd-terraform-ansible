@@ -89,7 +89,7 @@ resource "tls_private_key" "vault" {
 resource "tls_cert_request" "vault" {
   private_key_pem = tls_private_key.vault.private_key_pem
   dns_names       = concat(
-    ["localhost", "vault.service.consul", "*.vault.service.consul"],
+    ["localhost", "vault.service.consul", "active.vault.service.consul", "standby.vault.service.consul"],
     [for s in keys(local.vault_servers) : "${s}.${var.local_cluster_domain}"]
   )
   ip_addresses    = concat(["127.0.0.1"], values(local.vault_servers))
