@@ -1,4 +1,4 @@
 server=/.{{ local_cluster_domain }}/{{ hostvars["dns-server1"].ansible_host }}
 server=/.{{ local_cluster_domain }}/{{ hostvars["dns-server2"].ansible_host }}
 
-address=/.{{ apps_subdomain }}/{{ hostvars["load-balancer"].ansible_host }}
+address=/.{{ apps_subdomain }}.{{ external_domain }}/{{ hostvars["load-balancer"].ansible_host }}

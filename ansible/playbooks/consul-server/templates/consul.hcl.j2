@@ -7,7 +7,9 @@ primary_datacenter = "dc1"
 bootstrap_expect = 3
 retry_join = [
   {% for host in groups["consul_servers"] -%}
-  "{{ host }}.{{ local_cluster_domain }}",
+  {% if host != inventory_hostname -%}
+    "{{ host }}.{{ local_cluster_domain }}",
+  {% endif -%}
   {% endfor -%}
 ]
 

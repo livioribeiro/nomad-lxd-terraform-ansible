@@ -72,17 +72,17 @@ data "consul_acl_token_secret_id" "nomad_server" {
 }
 
 # Vault token
-data "local_file" "vault_nomad_token" {
+data "local_file" "vault_token_nomad" {
   depends_on = [null_resource.vault_acls]
 
-  filename = "vault/vault_nomad_token.txt"
+  filename = "vault/vault_token_nomad.txt"
 }
 
 resource "local_file" "nomad_ansible_vars" {
   filename = "${path.module}/.tmp/ansible/nomad_vars.json"
   content = jsonencode({
     consul_token = data.consul_acl_token_secret_id.nomad_server.secret_id
-    vault_token  = data.local_file.vault_nomad_token.content
+    vault_token  = data.local_file.vault_token_nomad.content
   })
 }
 

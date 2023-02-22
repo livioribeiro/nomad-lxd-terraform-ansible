@@ -17,7 +17,7 @@ resource "lxd_container" "nomad_infra_client" {
       { address = each.value }
     )
     "limits.cpu"          = 1
-    "limits.memory"       = "2GB"
+    "limits.memory"       = "3GB"
     "security.nesting"    = true
     "security.privileged" = true
     "raw.lxc" : <<-EOT
@@ -58,7 +58,7 @@ resource "lxd_container" "nomad_apps_client" {
       { address = each.value }
     )
     "limits.cpu"          = 1
-    "limits.memory"       = "2GB"
+    "limits.memory"       = "3GB"
     "security.nesting"    = true
     "security.privileged" = true
     "raw.lxc" : <<-EOT

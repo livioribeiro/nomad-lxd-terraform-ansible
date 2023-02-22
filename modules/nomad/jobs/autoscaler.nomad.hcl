@@ -13,6 +13,26 @@ variable "promtail_version" {
   default = "2.7.2"
 }
 
+variable "ca_cert" {
+  type    = string
+  default = ""
+}
+
+variable "client_cert" {
+  type    = string
+  default = ""
+}
+
+variable "client_key" {
+  type    = string
+  default = ""
+}
+
+variable "nomad_token" {
+  type    = string
+  default = ""
+}
+
 job "autoscaler" {
   type        = "service"
   datacenters = ["infra"]
@@ -121,10 +141,29 @@ job "autoscaler" {
       }
 
       template {
+        destination = "${NOMAD_SECRETS_DIR}/ca.pem"
+        data        = var.ca_cert
+      }
+
+      template {
+        destination = "${NOMAD_SECRETS_DIR}/cert.pem"
+        data        = var.client_cert
+      }
+
+      template {
+        destination = "${NOMAD_SECRETS_DIR}/private_key.pem"
+        data        = var.client_key
+      }
+
+      template {
         destination = "${NOMAD_TASK_DIR}/config.hcl"
-        data = <<EOF
+        data = <<EOT
 nomad {
-  address = "http://{{ env "attr.unique.network.ip-address" }}:4646"
+  address     = "https://nomad.service.consul:4646"
+  token       = "${var.nomad_token}"
+  ca_cert     = "{{ env "NOMAD_SECRETS_DIR" }}/ca.pem"
+  client_cert = "{{ env "NOMAD_SECRETS_DIR" }}/cert.pem"
+  client_key  = "{{ env "NOMAD_SECRETS_DIR" }}/private_key.pem"
 }
 
 telemetry {
@@ -142,7 +181,7 @@ apm "prometheus" {
 strategy "target-value" {
   driver = "target-value"
 }
-EOF
+EOT
       }
     }
 
@@ -168,37 +207,37 @@ EOF
       template {
         destination = "local/promtail.yaml"
 
-        data = <<EOH
-server:
-  http_listen_port: {{ env "NOMAD_PORT_promtail" }}
-  grpc_listen_port: 0
-positions:
-  filename: /tmp/positions.yaml
-client:
-  url: http://{{ env "NOMAD_UPSTREAM_ADDR_loki" }}/api/prom/push
-scrape_configs:
-- job_name: system
-  static_configs:
-  - targets:
-      - localhost
-    labels:
-      task: autoscaler
-      __path__: /alloc/logs/autoscaler*
-  pipeline_stages:
-  - match:
-      selector: '{task="autoscaler"}'
-      stages:
-      - regex:
-          expression: '.*policy_id=(?P<policy_id>[a-zA-Z0-9_-]+).*source=(?P<source>[a-zA-Z0-9_-]+).*strategy=(?P<strategy>[a-zA-Z0-9_-]+).*target=(?P<target>[a-zA-Z0-9_-]+).*Group:(?P<group>[a-zA-Z0-9]+).*Job:(?P<job>[a-zA-Z0-9_-]+).*Namespace:(?P<namespace>[a-zA-Z0-9_-]+)'
-      - labels:
-          policy_id:
-          source:
-          strategy:
-          target:
-          group:
-          job:
-          namespace:
-EOH
+        data = <<-EOT
+          server:
+            http_listen_port: {{ env "NOMAD_PORT_promtail" }}
+            grpc_listen_port: 0
+          positions:
+            filename: /tmp/positions.yaml
+          client:
+            url: http://{{ env "NOMAD_UPSTREAM_ADDR_loki" }}/api/prom/push
+          scrape_configs:
+          - job_name: system
+            static_configs:
+            - targets:
+                - localhost
+              labels:
+                task: autoscaler
+                __path__: /alloc/logs/autoscaler*
+            pipeline_stages:
+            - match:
+                selector: '{task="autoscaler"}'
+                stages:
+                - regex:
+                    expression: '.*policy_id=(?P<policy_id>[a-zA-Z0-9_-]+).*source=(?P<source>[a-zA-Z0-9_-]+).*strategy=(?P<strategy>[a-zA-Z0-9_-]+).*target=(?P<target>[a-zA-Z0-9_-]+).*Group:(?P<group>[a-zA-Z0-9]+).*Job:(?P<job>[a-zA-Z0-9_-]+).*Namespace:(?P<namespace>[a-zA-Z0-9_-]+)'
+                - labels:
+                    policy_id:
+                    source:
+                    strategy:
+                    target:
+                    group:
+                    job:
+                    namespace:
+        EOT
       }
     }
   }

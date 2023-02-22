@@ -43,6 +43,12 @@ job "promtail" {
       }
     }
 
+    volume "docker-socket" {
+      type      = "host"
+      source    = "docker-socket"
+      read_only = true
+    }
+
     task "promtail" {
       driver = "docker"
 
@@ -51,9 +57,15 @@ job "promtail" {
         ports = ["http"]
         args = ["-config.file=local/promtail.yaml"]
 
-        volumes = [
-          "/var/run/docker.sock:/var/run/docker.sock"
-        ]
+        // volumes = [
+        //   "/var/run/docker.sock:/var/run/docker.sock"
+        // ]
+      }
+
+      volume_mount {
+        volume           = "docker-socket"
+        destination      = "/run/docker.sock"
+        propagation_mode = "private"
       }
 
       resources {

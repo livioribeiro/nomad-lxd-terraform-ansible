@@ -47,7 +47,9 @@ job "metrics" {
       port = "${NOMAD_PORT_prometheus}"
 
       connect {
-        sidecar_service {}
+        sidecar_service {
+          tags = ["traefik.enable=false"]
+        }
 
         sidecar_task {
           resources {
@@ -173,6 +175,13 @@ scrape_configs:
     - server: '{{ env "attr.unique.network.ip-address" }}:8500'
       token: '${var.consul_acl_token}'
       services: [proxy]
+
+  # GITEA
+  - job_name: gitea_metrics
+    consul_sd_configs:
+    - server: '{{ env "attr.unique.network.ip-address" }}:8500'
+      token: '${var.consul_acl_token}'
+      services: [gitea]
 
   # CONSUL CONNECT ENVOY STATSD
   - job_name: consul_connect_statsd_envoy_metrics

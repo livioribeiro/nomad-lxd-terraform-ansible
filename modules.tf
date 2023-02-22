@@ -13,7 +13,10 @@ module "nomad" {
     null_resource.provision_nfs_server,
   ]
 
-  nfs_server_host = "nfs-server.cluster.local"
-  external_domain = var.external_domain
-  apps_subdomain  = var.apps_subdomain
+  nfs_server_host              = "nfs-server.cluster.local"
+  external_domain              = var.external_domain
+  apps_subdomain               = var.apps_subdomain
+  ca_cert                      = tls_self_signed_cert.nomad_cluster.cert_pem
+  nomad_autoscaler_cert        = tls_locally_signed_cert.nomad_client.cert_pem
+  nomad_autoscaler_private_key = tls_private_key.nomad_client.private_key_pem
 }

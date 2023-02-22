@@ -192,8 +192,6 @@ resource "tls_private_key" "nomad_client" {
 
 resource "tls_cert_request" "nomad_client" {
   private_key_pem = tls_private_key.nomad_client.private_key_pem
-  # dns_names       = concat(["localhost", "client.global.nomad"], [for s in keys(local.nomad_clients) : "${s}.${var.local_cluster_domain}"])
-  # ip_addresses    = concat(["127.0.0.1"], values(local.nomad_clients))
   dns_names = ["localhost", "client.global.nomad", "nomad-client.service.consul"]
   ip_addresses = ["127.0.0.1"]
 

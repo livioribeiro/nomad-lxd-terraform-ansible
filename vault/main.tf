@@ -61,7 +61,7 @@ resource "vault_token" "nomad_cluster" {
   period   = "72h"
 }
 
-resource "local_file" "vault_nomad_token" {
+resource "local_file" "vault_token_nomad" {
   content  = vault_token.nomad_cluster.client_token
-  filename = "vault_nomad_token.txt"
+  filename = "vault_token_nomad.txt"
 }

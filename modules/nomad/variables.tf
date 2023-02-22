@@ -9,3 +9,15 @@ variable "external_domain" {
 variable "apps_subdomain" {
   type = string
 }
+
+variable "ca_cert" {
+  type = string
+}
+
+variable "nomad_autoscaler_cert" {
+  type = string
+}
+
+variable "nomad_autoscaler_private_key" {
+  type = string
+}

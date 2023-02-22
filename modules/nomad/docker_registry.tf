@@ -36,7 +36,7 @@ resource "nomad_job" "docker-registry" {
 
 resource "consul_config_entry" "docker_registry_intention" {
   kind = "service-intentions"
-  name = "docker-registry-redis"
+  name = "docker-registry-cache"
 
   config_json = jsonencode({
     Sources = [

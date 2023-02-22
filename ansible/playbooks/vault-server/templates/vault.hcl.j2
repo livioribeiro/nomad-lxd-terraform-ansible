@@ -17,15 +17,17 @@ service_registration "consul" {
 
 storage "raft" {
   path    = "/opt/vault/data"
-  node_id = "{{ ansible_hostname }}"
+  node_id = "{{ inventory_hostname }}"
 
   {% for host in groups["vault_servers"] -%}
+  {% if host != inventory_hostname -%}
   retry_join {
     leader_api_addr         = "https://{{ host }}.{{ local_cluster_domain }}:8200"
     leader_ca_cert_file     = "/etc/certs.d/ca.pem"
     leader_client_cert_file = "/etc/certs.d/cert.pem"
     leader_client_key_file  = "/etc/certs.d/private_key.pem"
   }
+  {% endif -%}
   {% endfor -%}
 }
 

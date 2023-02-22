@@ -37,7 +37,7 @@ terraform {
 
     nomad = {
       source  = "hashicorp/nomad"
-      version = "~> 1.4"
+      version = "~>1.4"
     }
   }
 }
@@ -47,6 +47,7 @@ provider "lxd" {
   generate_client_certificates = true
 }
 
+# Consul
 provider "consul" {
   address = "${lxd_container.consul_server["consul-server1"].ipv4_address}:8501"
   scheme  = "https"

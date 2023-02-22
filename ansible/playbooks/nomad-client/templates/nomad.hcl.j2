@@ -4,6 +4,11 @@ datacenter = "{{ datacenter }}"
 client {
   enabled           = true
   network_interface = "eth0"
+
+  host_volume "docker-socket" {
+    path      = "/run/docker.sock"
+    read_only = true
+  }
 }
 
 acl {
@@ -45,9 +50,5 @@ plugin "docker" {
   config {
     allow_privileged = true
     extra_labels = ["job_name", "job_id", "task_group_name", "task_name", "namespace", "node_name", "node_id"]
-
-    volumes {
-      enabled = true
-    }
   }
 }

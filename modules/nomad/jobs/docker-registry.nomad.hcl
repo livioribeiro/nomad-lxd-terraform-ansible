@@ -117,7 +117,7 @@ job "docker-registry" {
     }
   }
 
-  group "redis" {
+  group "cache" {
     network {
       mode = "bridge"
     }
