@@ -1,18 +1,16 @@
 ---
-# - name: Create consul certs dit
-#   ansible.builtin.file:
-#     path: /etc/certs.d/consul
-#     state: directory
-#     owner: consul
-#     mode: 0755
+- name: Create consul client certs dir
+  ansible.builtin.file:
+    path: /etc/certs.d/consul
+    state: directory
 
-# - name: Copy consul certs
-#   loop: ["cert", "private_key"]
-#   ansible.builtin.copy:
-#     content: '{{ consul_certs[item] }}'
-#     dest: '/etc/certs.d/consul/{{ item }}.pem'
-#     owner: consul
-#     mode: 0644
+- name: Copy consul client certs
+  loop: ["cert", "private_key"]
+  ansible.builtin.copy:
+    content: '{{ consul_client_certs[item] }}'
+    dest: '/etc/certs.d/consul/{{ item }}.pem'
+    owner: consul
+    mode: 0644
 
 - name: Define agent token
   ansible.builtin.set_fact:
@@ -27,7 +25,7 @@
       -client-cert /etc/certs.d/cert.pem
       -client-key /etc/certs.d/private_key.pem
       -token "{{ consul_management_token }}"
-      -description "{{ inventory_hostname }} agent token"
+      -description "{{ ansible_hostname }} agent token"
       -node-identity "{{ ansible_hostname }}:dc1"
       -secret "{{ consul_agent_token }}"
   register: create_agent_token
@@ -51,16 +49,16 @@
     state: restarted
     enabled: true
 
-- name: Copy dnsmasq consul config
+- name: Copy systemd-resolved consul config
   ansible.builtin.copy:
-    src: consul-dns.conf
-    dest: /etc/dnsmasq.d/
+    src: consul.conf
+    dest: /etc/systemd/resolved.conf.d/
     mode: 0644
-  register: dnsmasq_config
+  register: resolved_config
 
-- name: Restart dnsmasq
-  when: dnsmasq_config.changed
+- name: Restart systemd-resolved
+  when: resolved_config.changed
   ansible.builtin.systemd:
-    name: dnsmasq
+    name: systemd-resolved
     state: restarted
 

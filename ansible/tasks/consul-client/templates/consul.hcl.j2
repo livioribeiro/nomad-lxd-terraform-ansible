@@ -5,7 +5,7 @@ client_addr    = "127.0.0.1 {{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}"
 
 retry_join = [
   {% for host in groups["consul_servers"] -%}
-  "{{ host }}.{{ local_cluster_domain }}",
+  "{{ hostvars[host].ansible_host }}",
   {% endfor -%}
 ]
 
@@ -22,6 +22,8 @@ connect {
 tls {
   defaults {
     ca_file         = "/etc/certs.d/ca.pem"
+    cert_file       = "/etc/certs.d/consul/cert.pem"
+    key_file        = "/etc/certs.d/consul/private_key.pem"
     verify_incoming = true
     verify_outgoing = true
   }

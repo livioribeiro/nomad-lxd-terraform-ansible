@@ -15,15 +15,19 @@ resource "local_file" "ansible_vars" {
         ubuntu_version          = var.ubuntu_version
         external_domain         = var.external_domain
         apps_subdomain          = var.apps_subdomain
-        local_cluster_domain    = var.local_cluster_domain
         ca_cert                 = tls_self_signed_cert.nomad_cluster.cert_pem
         consul_management_token = local.consul_management_token
         consul_encrypt_key      = random_id.consul_encrypt_key.b64_std
         nomad_encrypt_key       = random_id.nomad_encrypt_key.b64_std
 
-        consul_certs = {
+        consul_server_certs = {
           cert        = tls_locally_signed_cert.consul.cert_pem
           private_key = tls_private_key.consul.private_key_pem
+        }
+
+        consul_client_certs = {
+          cert        = tls_locally_signed_cert.consul_client.cert_pem
+          private_key = tls_private_key.consul_client.private_key_pem
         }
 
         vault_certs = {
@@ -47,35 +51,30 @@ resource "local_file" "ansible_vars" {
 
 resource "local_file" "ansible_hosts" {
   filename = "${path.module}/.tmp/ansible/inventory/hosts"
-  content  = <<EOT
-[dns_servers]
-%{for name, host in local.dns_servers~}
-${name} ansible_host=${host}
-%{endfor~}
-
+  content = <<EOT
 [consul_servers]
-%{for name, host in local.consul_servers~}
-${name} ansible_host=${host}
+%{for server in lxd_container.consul_server~}
+${server.name} ansible_host=${server.ipv4_address}
 %{endfor~}
 
 [vault_servers]
-%{for name, host in local.vault_servers~}
-${name} ansible_host=${host}
+%{for server in lxd_container.vault_server~}
+${server.name} ansible_host=${server.ipv4_address}
 %{endfor~}
 
 [nomad_servers]
-%{for name, host in local.nomad_servers~}
-${name} ansible_host=${host}
+%{for server in lxd_container.nomad_server~}
+${server.name} ansible_host=${server.ipv4_address}
 %{endfor~}
 
 [nomad_infra_clients]
-%{for name, host in local.nomad_infra_clients~}
-${name} ansible_host=${host}
+%{for server in lxd_container.nomad_infra_client~}
+${server.name} ansible_host=${server.ipv4_address}
 %{endfor~}
 
 [nomad_apps_clients]
-%{for name, host in local.nomad_apps_clients~}
-${name} ansible_host=${host}
+%{for server in lxd_container.nomad_apps_client~}
+${server.name} ansible_host=${server.ipv4_address}
 %{endfor~}
 
 [nomad_clients]
@@ -90,11 +89,10 @@ nomad_servers
 nomad_clients
 
 [cluster]
-${local.nfs_server.name} ansible_host=${local.nfs_server.host}
-${local.load_balancer.name} ansible_host=${local.load_balancer.host}
+${lxd_container.load_balancer.name} ansible_host=${lxd_container.load_balancer.ipv4_address}
+${lxd_container.nfs_server.name} ansible_host=${lxd_container.nfs_server.ipv4_address}
 
 [cluster:children]
-dns_servers
 consul_servers
 vault_servers
 nomad_servers

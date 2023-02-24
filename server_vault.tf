@@ -3,7 +3,7 @@ resource "lxd_container" "vault_server" {
   for_each   = local.vault_servers
 
   name     = each.key
-  image    = "local:consul"
+  image    = "local:base"
   profiles = [lxd_profile.nomad.name]
 
   config = {

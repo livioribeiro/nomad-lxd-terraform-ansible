@@ -1,7 +1,4 @@
 locals {
-  dns_servers = {
-    for i in [1, 2] : "dns-server${i}" => "10.99.0.${i + 1}"
-  }
   consul_servers = {
     for i in [1, 2, 3] : "consul-server${i}" => "10.99.0.1${i}"
   }
@@ -19,21 +16,4 @@ locals {
   }
   nfs_server    = { name = "nfs-server", host = "10.99.0.200" }
   load_balancer = { name = "load-balancer", host = "10.99.0.250" }
-}
-
-locals {
-  nomad_clients = merge(local.nomad_infra_clients, local.nomad_apps_clients)
-
-  all_servers = merge(
-    local.dns_servers,
-    local.consul_servers,
-    local.vault_servers,
-    local.nomad_servers,
-    local.nomad_infra_clients,
-    local.nomad_apps_clients,
-    {
-      (local.nfs_server.name)    = local.nfs_server.host
-      (local.load_balancer.name) = local.load_balancer.host
-    }
-  )
 }

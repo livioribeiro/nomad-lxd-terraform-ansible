@@ -7,10 +7,6 @@ packer {
   }
 }
 
-variable "image_source" {
-  type = string
-}
-
 variable "cni_plugins_version" {
   type    = string
   default = "1.2.0"
@@ -36,7 +32,7 @@ locals {
 }
 
 source "lxd" "nomad_client" {
-  image           = var.image_source
+  image           = "local:base"
   container_name  = "packer-nomad-client"
   output_image    = "nomad-client"
   publish_properties = {

@@ -3,7 +3,7 @@ locals {
 }
 
 resource "null_resource" "image_nomad_client" {
-  depends_on = [null_resource.image_consul]
+  depends_on = [null_resource.image_base]
 
   triggers = {
     template = sha256(file("${path.module}/packer/nomad-client.pkr.hcl"))
@@ -11,7 +11,7 @@ resource "null_resource" "image_nomad_client" {
 
   provisioner "local-exec" {
     working_dir = "${path.module}/packer"
-    command     = "packer build -var image_source=${local.image_consul} nomad-client.pkr.hcl"
+    command     = "packer build nomad-client.pkr.hcl"
   }
 
   provisioner "local-exec" {

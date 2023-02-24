@@ -30,7 +30,7 @@ resource "lxd_container" "nfs_server" {
 resource "null_resource" "provision_nfs_server" {
   depends_on = [
     lxd_container.nfs_server,
-    null_resource.provision_dns_server,
+    null_resource.provision_consul_server,
   ]
 
   provisioner "local-exec" {

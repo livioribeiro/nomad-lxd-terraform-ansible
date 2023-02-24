@@ -37,7 +37,7 @@ resource "lxd_container" "load_balancer" {
 resource "null_resource" "provision_load_balancer" {
   depends_on = [
     lxd_container.load_balancer,
-    null_resource.provision_dns_server,
+    null_resource.provision_consul_server,
   ]
 
   provisioner "local-exec" {

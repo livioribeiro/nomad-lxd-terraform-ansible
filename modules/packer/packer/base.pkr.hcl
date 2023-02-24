@@ -15,6 +15,19 @@ variable "ssh_key" {
   type = string
 }
 
+variable "ubuntu_version" {
+  type    = string
+  default = "jammy"
+}
+
+data "http" "hashicorp_gpg" {
+  url = "https://apt.releases.hashicorp.com/gpg"
+}
+
+locals {
+  hashicorp_gpg = data.http.hashicorp_gpg.body
+}
+
 source "lxd" "base" {
   image = var.image_source
   container_name = "packer-base"
@@ -29,17 +42,8 @@ build {
   sources = ["source.lxd.base"]
 
   provisioner "file" {
-    destination = "/etc/dnsmasq.conf"
-    content = <<-EOT
-      port=53
-      listen-address=127.0.0.1
-      no-dhcp-interface=lo
-      bind-interfaces
-      no-resolv
-
-      server=9.9.9.9
-      server=149.112.112.112
-    EOT
+    destination = "/etc/apt/sources.list.d/hashicorp.list"
+    content     = "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com ${var.ubuntu_version} main"
   }
 
   provisioner "shell" {
@@ -50,20 +54,9 @@ build {
     inline = [
       "mkdir -p /home/ubuntu/.ssh",
       "echo '${var.ssh_key}' > /home/ubuntu/.ssh/authorized_keys",
+      "echo '${local.hashicorp_gpg}' | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg",
       "apt-get update",
-      "apt-get install -y openssh-server",
-      "apt-get install -o 'DPkg::Options::=--force-confdef' -y dnsmasq",
-
-      "systemctl stop systemd-resolved",
-      "systemctl disable systemd-resolved",
+      "apt-get install -y openssh-server consul",
     ]
-  }
-
-  provisioner "file" {
-    destination = "/etc/resolv.conf"
-    content = <<-EOT
-      127.0.0.1
-      options edns0 trust-ad
-    EOT
   }
 }

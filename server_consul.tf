@@ -12,7 +12,7 @@ resource "lxd_container" "consul_server" {
   for_each   = local.consul_servers
 
   name     = each.key
-  image    = "local:consul"
+  image    = "local:base"
   profiles = [lxd_profile.nomad.name]
 
   config = {
@@ -38,7 +38,8 @@ resource "lxd_container" "consul_server" {
 resource "null_resource" "provision_consul_server" {
   depends_on = [
     lxd_container.consul_server,
-    null_resource.provision_dns_server,
+    local_file.ansible_hosts,
+    local_file.ansible_vars,
   ]
 
   provisioner "local-exec" {

@@ -6,11 +6,9 @@ primary_datacenter = "dc1"
 
 bootstrap_expect = 3
 retry_join = [
-  {% for host in groups["consul_servers"] -%}
-  {% if host != inventory_hostname -%}
-    "{{ host }}.{{ local_cluster_domain }}",
-  {% endif -%}
-  {% endfor -%}
+{% for host in groups["consul_servers"] -%}
+  "{{ hostvars[host].ansible_host }}",
+{% endfor -%}
 ]
 
 tls {

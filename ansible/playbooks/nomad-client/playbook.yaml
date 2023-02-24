@@ -4,9 +4,6 @@
     - name: Include ca certificate
       ansible.builtin.import_tasks: '{{ playbook_dir }}/../../tasks/ca-cert/tasks.yaml'
 
-    - name: Setup dns client
-      ansible.builtin.import_tasks: '{{ playbook_dir }}/../../tasks/dns-client/tasks.yaml'
-
     - name: Setup consul client
       ansible.builtin.import_tasks: '{{ playbook_dir }}/../../tasks/consul-client/tasks.yaml'
 
@@ -35,14 +32,12 @@
         mode: 0644
       notify: Restart docker
 
-    - name: Copy dnsmasq config
+    - name: Copy systemd-resolved docker config
       ansible.builtin.copy:
-        content: |
-          listen-address=172.17.0.1
-          no-dhcp-interface=docker0
-        dest: /etc/dnsmasq.d/docker.conf
+        src: docker-dns.conf
+        dest: /etc/systemd/resolved.conf.d/
         mode: 0644
-      notify: Restart dnsmasq
+      notify: Restart systemd-resolved
 
     - name: Copy nomad config
       ansible.builtin.template:
@@ -58,9 +53,9 @@
         name: docker
         state: restarted
 
-    - name: Restart dnsmasq
+    - name: Restart systemd-resolved
       ansible.builtin.systemd:
-        name: dnsmasq
+        name: systemd-resolved
         state: restarted
 
     - name: Restart nomad

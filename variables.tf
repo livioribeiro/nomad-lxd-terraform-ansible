@@ -12,8 +12,3 @@ variable "apps_subdomain" {
   type    = string
   default = "apps"
 }
-
-variable "local_cluster_domain" {
-  type    = string
-  default = "cluster.local"
-}

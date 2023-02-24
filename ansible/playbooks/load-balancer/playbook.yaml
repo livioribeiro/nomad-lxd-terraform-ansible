@@ -4,8 +4,8 @@
     - name: Include ca certificate
       ansible.builtin.import_tasks: '{{ playbook_dir }}/../../tasks/ca-cert/tasks.yaml'
 
-    - name: Setup dns client
-      ansible.builtin.import_tasks: '{{ playbook_dir }}/../../tasks/dns-client/tasks.yaml'
+    - name: Setup consul client
+      ansible.builtin.import_tasks: '{{ playbook_dir }}/../../tasks/consul-client/tasks.yaml'
 
     - name: Copy nomad cert with private key combined
       ansible.builtin.copy:
